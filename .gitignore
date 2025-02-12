@@ -1,0 +1,19 @@
+# Default ignored files
+.DS_Store
+edge-matrix-core/
+
+# IDE
+.idea/
+.vscode/
+.history
+
+# Builds
+build/
+bin/
+site/
+
+# golang
+.env
+keys/
+*.key
+
