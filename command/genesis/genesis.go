@@ -31,8 +31,22 @@ func setFlags(cmd *cobra.Command) {
 		"the directory for the Edge Matrix genesis data",
 	)
 
+	cmd.Flags().StringVar(
+		&params.name,
+		nameFlag,
+		"EdgeMatrixComputing",
+		"the name of p2p network",
+	)
+
+	cmd.Flags().Int64Var(
+		&params.networkId,
+		networkIdFlag,
+		0,
+		"the id of p2p network",
+	)
+
 	cmd.Flags().StringArrayVar(
-		&params.bootnodes,
+		&params.bootNodes,
 		command.BootnodeFlag,
 		[]string{},
 		"multiAddr URL for p2p discovery bootstrap. This flag can be used multiple times",

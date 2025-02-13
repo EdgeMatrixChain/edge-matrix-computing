@@ -17,13 +17,11 @@ const (
 	configFlag                   = "config"
 	genesisPathFlag              = "network"
 	dataDirFlag                  = "data-dir"
-	libp2pAddressFlag            = "base-libp2p"
 	edgeLibp2pAddressFlag        = "libp2p"
 	relayLibp2pAddressFlag       = "relay-libp2p"
 	prometheusAddressFlag        = "prometheus"
 	natFlag                      = "nat"
 	dnsFlag                      = "dns"
-	sealFlag                     = "seal"
 	maxPeersFlag                 = "max-peers"
 	maxInboundPeersFlag          = "max-inbound-peers"
 	maxOutboundPeersFlag         = "max-outbound-peers"
@@ -124,18 +122,6 @@ func (p *serverParams) isLogFileLocationSet() bool {
 	return p.rawConfig.LogFilePath != ""
 }
 
-//func (p *serverParams) isDevConsensus() bool {
-//	return server.ConsensusType(p.genesisConfig.Params.GetEngine()) == server.DevConsensus
-//}
-
-func (p *serverParams) getRestoreFilePath() *string {
-	if p.rawConfig.RestoreFile != "" {
-		return &p.rawConfig.RestoreFile
-	}
-
-	return nil
-}
-
 func (p *serverParams) setRawGRPCAddress(grpcAddress string) {
 	p.rawConfig.GRPCAddr = grpcAddress
 }
@@ -171,16 +157,14 @@ func (p *serverParams) generateConfig() *server.Config {
 			MaxPeers:         p.rawConfig.Network.MaxPeers,
 			MaxInboundPeers:  p.rawConfig.Network.MaxInboundPeers,
 			MaxOutboundPeers: p.rawConfig.Network.MaxOutboundPeers,
+			NetworkID:        p.genesisConfig.NetworkId,
 			//Config:            p.genesisConfig,
 		},
-		RelayAddr: p.relayLibp2pAddress,
-		DataDir:   p.rawConfig.DataDir,
-		Seal:      p.rawConfig.ShouldSeal,
-		//PriceLimit:         p.rawConfig.TelePool.PriceLimit,
+		RelayAddr:          p.relayLibp2pAddress,
+		DataDir:            p.rawConfig.DataDir,
 		MaxSlots:           p.rawConfig.TelePool.MaxSlots,
 		MaxAccountEnqueued: p.rawConfig.TelePool.MaxAccountEnqueued,
 		SecretsManager:     p.secretsConfig,
-		RestoreFile:        p.getRestoreFilePath(),
 		LogLevel:           hclog.LevelFromString(p.rawConfig.LogLevel),
 		JSONLogFormat:      p.rawConfig.JSONLogFormat,
 		LogFilePath:        p.logFileLocation,

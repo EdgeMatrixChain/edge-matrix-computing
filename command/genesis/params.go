@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	dirFlag  = "dir"
-	nameFlag = "name"
+	dirFlag       = "dir"
+	nameFlag      = "name"
+	networkIdFlag = "network-id"
 )
 
 var (
@@ -21,7 +22,8 @@ var (
 type genesisParams struct {
 	genesisPath string
 	name        string
-	bootnodes   []string
+	networkId   int64
+	bootNodes   []string
 
 	genesisConfig *config.GenesisConfig
 }
@@ -55,7 +57,6 @@ func (p *genesisParams) getRequiredFlags() []string {
 }
 
 func (p *genesisParams) initRawParams() error {
-
 	return nil
 }
 
@@ -75,12 +76,14 @@ func (p *genesisParams) generateGenesis() error {
 }
 
 func (p *genesisParams) initGenesisConfig() error {
-	chainConfig := &config.GenesisConfig{
-		Name:      p.name,
-		Bootnodes: p.bootnodes,
+	genesisConfig := &config.GenesisConfig{
+		Name:       p.name,
+		NetworkId:  p.networkId,
+		Bootnodes:  p.bootNodes,
+		Relaynodes: []string{},
 	}
 
-	p.genesisConfig = chainConfig
+	p.genesisConfig = genesisConfig
 
 	return nil
 }
