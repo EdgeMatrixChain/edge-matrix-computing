@@ -67,13 +67,6 @@ func setFlags(cmd *cobra.Command) {
 	)
 
 	cmd.Flags().StringVar(
-		&params.rawConfig.Network.Libp2pAddr,
-		libp2pAddressFlag,
-		defaultConfig.Network.Libp2pAddr,
-		"the address and port for the base libp2p service",
-	)
-
-	cmd.Flags().StringVar(
 		&params.rawConfig.Network.EdgeLibp2pAddr,
 		edgeLibp2pAddressFlag,
 		defaultConfig.Network.EdgeLibp2pAddr,
@@ -107,13 +100,6 @@ func setFlags(cmd *cobra.Command) {
 		"",
 		"the path to the SecretsManager config file. Used for Hashicorp Vault. "+
 			"If omitted, the local FS secrets manager is used",
-	)
-
-	cmd.Flags().BoolVar(
-		&params.rawConfig.ShouldSeal,
-		sealFlag,
-		defaultConfig.ShouldSeal,
-		"the flag indicating that the client should seal blocks",
 	)
 
 	cmd.Flags().BoolVar(
