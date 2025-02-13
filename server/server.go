@@ -5,6 +5,7 @@ import (
 	"fmt"
 	cmdConfig "github.com/emc-protocol/edge-matrix-computing/command/server/config"
 	"github.com/emc-protocol/edge-matrix-core/core/application"
+	"github.com/emc-protocol/edge-matrix-core/core/application/proof"
 	"github.com/emc-protocol/edge-matrix-core/core/crypto"
 	"github.com/emc-protocol/edge-matrix-core/core/relay"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -189,7 +190,7 @@ func NewServer(config *Config) (*Server, error) {
 
 		if m.runningMode == RunningModeEdge {
 			// start edge network relay reserv
-			relayClient, err := relay.NewRelayClient(logger, relayNetConfig, m.config.RelayOn, m.config.GenesisConfig.Bootnodes)
+			relayClient, err := relay.NewRelayClient(logger, relayNetConfig, m.config.RelayOn, m.config.GenesisConfig.Relaynodes)
 			if err != nil {
 				return nil, err
 			}
@@ -218,6 +219,32 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, err
 		}
 
+		endpoint.SetSigner(proof.NewEIP155Signer(proof.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId)))
+
+		endpoint.AddHandler("/alive", func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			resp := fmt.Sprintf("{\"time\":\"%s\"}", time.Now().String())
+			w.Write([]byte(resp))
+		})
+
+		endpoint.AddHandler("/idl", func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			err, appIdl := endpoint.GetAppIdl()
+			if err != nil {
+				// Fetch idl json text through GET #{appUrl}/getAppIdl
+				idlData, err := os.ReadFile("idl.json")
+				if nil != err {
+					idlData = []byte("[]")
+				}
+				application.WriteSignedResponse(w, idlData, endpoint)
+			} else {
+				if len(appIdl) > 0 {
+					application.WriteSignedResponse(w, []byte(appIdl), endpoint)
+				} else {
+					application.WriteSignedResponse(w, []byte("[]"), endpoint)
+				}
+			}
+		})
 		if m.runningMode == RunningModeEdge {
 			// keep edge peer alive
 			err := m.relayClient.StartAlive(endpoint.SubscribeEvents())
