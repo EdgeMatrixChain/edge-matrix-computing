@@ -21,7 +21,6 @@ type Config struct {
 	JSONRPCAddr              string     `json:"jsonrpc_addr" yaml:"jsonrpc_addr"`
 	Telemetry                *Telemetry `json:"telemetry" yaml:"telemetry"`
 	Network                  *Network   `json:"network" yaml:"network"`
-	ShouldSeal               bool       `json:"seal" yaml:"seal"`
 	TelePool                 *TelePool  `json:"tele_pool" yaml:"tele_pool"`
 	LogLevel                 string     `json:"log_level" yaml:"log_level"`
 	RestoreFile              string     `json:"restore_file" yaml:"restore_file"`
@@ -64,7 +63,6 @@ type Network struct {
 
 // TelePool defines the TelePool configuration params
 type TelePool struct {
-	PriceLimit         uint64 `json:"price_limit" yaml:"price_limit"`
 	MaxSlots           uint64 `json:"max_slots" yaml:"max_slots"`
 	MaxAccountEnqueued uint64 `json:"max_account_enqueued" yaml:"max_account_enqueued"`
 }
@@ -75,23 +73,12 @@ type Headers struct {
 }
 
 const (
-	// DefaultBlockTime minimum block generation time in seconds
-	DefaultBlockTime uint64 = 2
-
-	// BlockTimeMultiplierForTimeout Multiplier to get IBFT timeout from block time
-	// timeout is calculated when IBFT timeout is not specified
-	BlockTimeMultiplierForTimeout uint64 = 5
-
 	// DefaultJSONRPCBatchRequestLimit maximum length allowed for json_rpc batch requests
 	DefaultJSONRPCBatchRequestLimit uint64 = 20
 
 	// DefaultJSONRPCBlockRangeLimit maximum block range allowed for json_rpc
 	// requests with fromBlock/toBlock values (e.g. eth_getLogs)
 	DefaultJSONRPCBlockRangeLimit uint64 = 1000
-
-	// DefaultNumBlockConfirmations minimal number of child blocks required for the parent block to be considered final
-	// on ethereum epoch lasts for 32 blocks. more details: https://www.alchemy.com/overviews/ethereum-commitment-levels
-	DefaultNumBlockConfirmations uint64 = 64
 
 	DefaultRunningMode string = "full"
 )
@@ -121,16 +108,13 @@ func DefaultConfig() *Config {
 				network.DefaultRelayLibp2pPort,
 			),
 		},
-		Telemetry:  &Telemetry{},
-		ShouldSeal: true,
+		Telemetry: &Telemetry{},
 		TelePool: &TelePool{
-			PriceLimit:         0,
 			MaxSlots:           4096,
 			MaxAccountEnqueued: 128,
 		},
 		LogLevel:    "INFO",
 		RestoreFile: "",
-		BlockTime:   DefaultBlockTime,
 		Headers: &Headers{
 			AccessControlAllowOrigins: []string{"*"},
 		},
@@ -139,7 +123,6 @@ func DefaultConfig() *Config {
 		JSONRPCBlockRangeLimit:   DefaultJSONRPCBlockRangeLimit,
 		RelayOn:                  false,
 		RelayDiscovery:           false,
-		NumBlockConfirmations:    DefaultNumBlockConfirmations,
 		RunningMode:              DefaultRunningMode,
 	}
 }

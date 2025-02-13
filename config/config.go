@@ -8,8 +8,9 @@ import (
 // Config is the blockchain config configuration
 type GenesisConfig struct {
 	Name        string   `json:"name"`
-	Bootnodes   []string `json:"bootnodes,omitempty"`
-	Relaynodes  []string `json:"relaynodes,omitempty"`
+	NetworkId   int64    `json:"NetworkId"`
+	Bootnodes   []string `json:"bootnodes"`
+	Relaynodes  []string `json:"relaynodes"`
 	TeleVersion string   `json:"tele_version,omitempty""`
 }
 
@@ -33,6 +34,6 @@ func importConfig(content []byte) (*GenesisConfig, error) {
 	if err := json.Unmarshal(content, &genesisConfig); err != nil {
 		return nil, err
 	}
-	
+
 	return genesisConfig, nil
 }

@@ -27,13 +27,9 @@ type Config struct {
 	MaxSlots           uint64
 
 	Telemetry   *Telemetry
-	Network     *network.Config
 	EdgeNetwork *network.Config
 
-	DataDir     string
-	RestoreFile *string
-
-	Seal bool
+	DataDir string
 
 	SecretsManager *secrets.SecretsManagerConfig
 
