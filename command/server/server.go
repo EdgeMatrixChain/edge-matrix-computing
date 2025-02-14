@@ -21,6 +21,7 @@ func GetCommand() *cobra.Command {
 	helper.RegisterGRPCAddressFlag(serverCmd)
 	helper.RegisterLegacyGRPCAddressFlag(serverCmd)
 	helper.RegisterJSONRPCFlag(serverCmd)
+	helper.RegisterTransProxyFlag(serverCmd)
 
 	registerSubcommands(serverCmd)
 	setFlags(serverCmd)
@@ -244,6 +245,7 @@ func runPreRun(cmd *cobra.Command, _ []string) error {
 	// The config file will have precedence over --flag
 	params.setRawGRPCAddress(helper.GetGRPCAddress(cmd))
 	params.setRawJSONRPCAddress(helper.GetJSONRPCAddress(cmd))
+	params.setRawTransparentProxyAddress(helper.GetTransparentProxyAddress(cmd))
 	params.setJSONLogFormat(helper.GetJSONLogFormat(cmd))
 
 	// Check if the config file has been specified

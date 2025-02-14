@@ -17,9 +17,7 @@ import (
 )
 
 var (
-	errInvalidBlockTime       = errors.New("invalid block time specified")
 	errDataDirectoryUndefined = errors.New("data directory not defined")
-	errMinerCanisterUndefined = errors.New("miner canister not defined")
 )
 
 func (p *serverParams) initConfigFromFile() error {
@@ -189,6 +187,10 @@ func (p *serverParams) initAddresses() error {
 		return err
 	}
 
+	if err := p.initTransparentProxyAddress(); err != nil {
+		return err
+	}
+
 	return p.initGRPCAddress()
 }
 
@@ -271,6 +273,19 @@ func (p *serverParams) initJSONRPCAddress() error {
 
 	if p.jsonRPCAddress, parseErr = helper.ResolveAddr(
 		p.rawConfig.JSONRPCAddr,
+		helper.AllInterfacesBinding,
+	); parseErr != nil {
+		return parseErr
+	}
+
+	return nil
+}
+
+func (p *serverParams) initTransparentProxyAddress() error {
+	var parseErr error
+
+	if p.transparentProxyAddress, parseErr = helper.ResolveAddr(
+		p.rawConfig.TransparentProxyAddr,
 		helper.AllInterfacesBinding,
 	); parseErr != nil {
 		return parseErr

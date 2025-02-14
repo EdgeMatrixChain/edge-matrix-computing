@@ -8,7 +8,7 @@ import (
 	"github.com/emc-protocol/edge-matrix-core/core/application"
 	"github.com/emc-protocol/edge-matrix-core/core/application/proof"
 	"github.com/emc-protocol/edge-matrix-core/core/crypto"
-	"github.com/emc-protocol/edge-matrix-core/core/jsonrpc"
+	"github.com/emc-protocol/edge-matrix-core/core/jsonrpc/web3"
 	"github.com/emc-protocol/edge-matrix-core/core/relay"
 	"github.com/emc-protocol/edge-matrix-core/core/types"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -46,7 +46,8 @@ type Server struct {
 	config *Config
 
 	// jsonrpc stack
-	jsonrpcServer *jsonrpc.JSONRPC
+	jsonrpcServer   *web3.JSONRPC
+	edgeProxyServer *application.TransparentProxy
 
 	// system grpc server
 	grpcServer *grpc.Server
@@ -68,6 +69,14 @@ type Server struct {
 
 	// running mode
 	runningMode RunningModeType
+}
+
+func (s *Server) GetRelayHost() host.Host {
+	return s.relayServer.GetHost()
+}
+
+func (s *Server) GetNetworkHost() host.Host {
+	return s.edgeNetwork.GetHost()
 }
 
 var dirPaths = []string{
@@ -332,6 +341,11 @@ func NewServer(config *Config) (*Server, error) {
 				return nil, err
 			}
 
+			// setup and start transparent proxy server
+			if err := m.setupTransparentProxy(); err != nil {
+				return nil, err
+			}
+
 			// start relay server
 			if config.RelayAddr.Port > 0 {
 				relayListenAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", config.RelayAddr.IP.String(), config.RelayAddr.Port))
@@ -424,7 +438,7 @@ func (s *Server) setupJSONRPC() error {
 		Server:            s.edgeNetwork,
 		SyncAppPeerClient: s.syncAppPeerClient,
 	}
-	conf := &jsonrpc.Config{
+	conf := &web3.Config{
 		Store:                    hub,
 		Addr:                     s.config.JSONRPC.JSONRPCAddr,
 		NetworkID:                uint64(s.config.GenesisConfig.NetworkId),
@@ -432,12 +446,32 @@ func (s *Server) setupJSONRPC() error {
 		AccessControlAllowOrigin: s.config.JSONRPC.AccessControlAllowOrigin,
 	}
 
-	srv, err := jsonrpc.NewJSONRPC(s.logger, conf)
+	srv, err := web3.NewJSONRPC(s.logger, conf)
 	if err != nil {
 		return err
 	}
 
 	s.jsonrpcServer = srv
+
+	return nil
+}
+
+// setupTransparentProxy sets up the edge transparent proxy server, using the set configuration
+func (s *Server) setupTransparentProxy() error {
+	conf := &application.Config{
+		Store:                    s,
+		Addr:                     s.config.TransparentProxy.ProxyAddr,
+		NetworkID:                uint64(s.config.GenesisConfig.NetworkId),
+		ChainName:                s.config.GenesisConfig.Name,
+		AccessControlAllowOrigin: s.config.TransparentProxy.AccessControlAllowOrigin,
+	}
+
+	srv, err := application.NewTransportProxy(s.logger, conf)
+	if err != nil {
+		return err
+	}
+
+	s.edgeProxyServer = srv
 
 	return nil
 }

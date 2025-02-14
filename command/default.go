@@ -5,9 +5,10 @@ const (
 )
 
 const (
-	JSONOutputFlag  = "json"
-	GRPCAddressFlag = "grpc-address"
-	JSONRPCFlag     = "jsonrpc"
+	JSONOutputFlag       = "json"
+	GRPCAddressFlag      = "grpc-address"
+	JSONRPCFlag          = "jsonrpc"
+	TransparentProxyFlag = "trans-proxy"
 )
 
 // GRPCAddressFlagLEGACY Legacy flag that needs to be present to preserve backwards

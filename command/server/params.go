@@ -42,13 +42,6 @@ const (
 	appNameFlag     = "app-name"
 	appUrlFlag      = "app-url"
 	//appOriginFlag = "app-origin"
-	icHostFlag = "ic-host"
-)
-
-// Flags that are deprecated, but need to be preserved for
-// backwards compatibility with existing scripts
-const (
-	ibftBaseTimeoutFlagLEGACY = "ibft-base-timeout"
 )
 
 const (
@@ -73,14 +66,15 @@ type serverParams struct {
 	rawConfig  *config.Config
 	configPath string
 
-	libp2pAddress      *net.TCPAddr
-	edgeLibp2pAddress  *net.TCPAddr
-	relayLibp2pAddress *net.TCPAddr
-	prometheusAddress  *net.TCPAddr
-	natAddress         net.IP
-	dnsAddress         multiaddr.Multiaddr
-	grpcAddress        *net.TCPAddr
-	jsonRPCAddress     *net.TCPAddr
+	libp2pAddress           *net.TCPAddr
+	edgeLibp2pAddress       *net.TCPAddr
+	relayLibp2pAddress      *net.TCPAddr
+	prometheusAddress       *net.TCPAddr
+	natAddress              net.IP
+	dnsAddress              multiaddr.Multiaddr
+	grpcAddress             *net.TCPAddr
+	jsonRPCAddress          *net.TCPAddr
+	transparentProxyAddress *net.TCPAddr
 
 	devInterval uint64
 	isDevMode   bool
@@ -130,6 +124,10 @@ func (p *serverParams) setRawJSONRPCAddress(jsonRPCAddress string) {
 	p.rawConfig.JSONRPCAddr = jsonRPCAddress
 }
 
+func (p *serverParams) setRawTransparentProxyAddress(transparentProxyAddress string) {
+	p.rawConfig.TransparentProxyAddr = transparentProxyAddress
+}
+
 func (p *serverParams) setJSONLogFormat(jsonLogFormat bool) {
 	p.rawConfig.JSONLogFormat = jsonLogFormat
 }
@@ -137,6 +135,10 @@ func (p *serverParams) setJSONLogFormat(jsonLogFormat bool) {
 func (p *serverParams) generateConfig() *server.Config {
 	return &server.Config{
 		GenesisConfig: p.genesisConfig,
+		TransparentProxy: &server.TransparentProxy{
+			ProxyAddr:                p.transparentProxyAddress,
+			AccessControlAllowOrigin: p.corsAllowedOrigins,
+		},
 		JSONRPC: &server.JSONRPC{
 			JSONRPCAddr:              p.jsonRPCAddress,
 			AccessControlAllowOrigin: p.corsAllowedOrigins,

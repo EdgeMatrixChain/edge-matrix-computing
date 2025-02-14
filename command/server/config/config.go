@@ -18,6 +18,7 @@ type Config struct {
 	DataDir                  string     `json:"data_dir" yaml:"data_dir"`
 	GRPCAddr                 string     `json:"grpc_addr" yaml:"grpc_addr"`
 	JSONRPCAddr              string     `json:"jsonrpc_addr" yaml:"jsonrpc_addr"`
+	TransparentProxyAddr     string     `json:"transparent_proxy_addr" yaml:"transparent_proxy_addr"`
 	Telemetry                *Telemetry `json:"telemetry" yaml:"telemetry"`
 	Network                  *Network   `json:"network" yaml:"network"`
 	TelePool                 *TelePool  `json:"tele_pool" yaml:"tele_pool"`

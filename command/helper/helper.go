@@ -132,6 +132,11 @@ func GetJSONRPCAddress(cmd *cobra.Command) string {
 	return cmd.Flag(command.JSONRPCFlag).Value.String()
 }
 
+// GetTransparentProxyAddress extracts the set Transparent Proxy address
+func GetTransparentProxyAddress(cmd *cobra.Command) string {
+	return cmd.Flag(command.TransparentProxyFlag).Value.String()
+}
+
 // GetJSONLogFormat extracts the set JSON Format flag
 func GetJSONLogFormat(cmd *cobra.Command) bool {
 	return cmd.Flag(command.JSONOutputFlag).Changed
@@ -178,6 +183,15 @@ func RegisterJSONRPCFlag(cmd *cobra.Command) {
 		command.JSONRPCFlag,
 		fmt.Sprintf("%s:%d", AllInterfacesBinding, server.DefaultJSONRPCPort),
 		"the JSON-RPC interface",
+	)
+}
+
+// RegisterTransProxyFlag registers the transparent-proxy address flag for all child commands
+func RegisterTransProxyFlag(cmd *cobra.Command) {
+	cmd.PersistentFlags().String(
+		command.TransparentProxyFlag,
+		fmt.Sprintf("%s:%d", AllInterfacesBinding, server.DefaultTransProxyPort),
+		"the transparent proxy interface",
 	)
 }
 

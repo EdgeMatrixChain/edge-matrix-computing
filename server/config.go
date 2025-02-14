@@ -12,15 +12,17 @@ import (
 
 const DefaultGRPCPort int = 50000
 const DefaultJSONRPCPort int = 50002
+const DefaultTransProxyPort int = 50005
 
 // Config is used to parametrize the minimal client
 type Config struct {
 	GenesisConfig *config.GenesisConfig
 
-	JSONRPC    *JSONRPC
-	GRPCAddr   *net.TCPAddr
-	LibP2PAddr *net.TCPAddr
-	RelayAddr  *net.TCPAddr // the relay address
+	JSONRPC          *JSONRPC
+	TransparentProxy *TransparentProxy
+	GRPCAddr         *net.TCPAddr
+	LibP2PAddr       *net.TCPAddr
+	RelayAddr        *net.TCPAddr // the relay address
 
 	PriceLimit         uint64
 	MaxAccountEnqueued uint64
@@ -61,4 +63,9 @@ type JSONRPC struct {
 	AccessControlAllowOrigin []string
 	BatchLengthLimit         uint64
 	BlockRangeLimit          uint64
+}
+
+type TransparentProxy struct {
+	ProxyAddr                *net.TCPAddr
+	AccessControlAllowOrigin []string
 }
