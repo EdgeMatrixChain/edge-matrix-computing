@@ -16,15 +16,12 @@ type Config struct {
 	GenesisPath              string     `json:"chain_config" yaml:"chain_config"`
 	SecretsConfigPath        string     `json:"secrets_config" yaml:"secrets_config"`
 	DataDir                  string     `json:"data_dir" yaml:"data_dir"`
-	BlockGasTarget           string     `json:"block_gas_target" yaml:"block_gas_target"`
 	GRPCAddr                 string     `json:"grpc_addr" yaml:"grpc_addr"`
 	JSONRPCAddr              string     `json:"jsonrpc_addr" yaml:"jsonrpc_addr"`
 	Telemetry                *Telemetry `json:"telemetry" yaml:"telemetry"`
 	Network                  *Network   `json:"network" yaml:"network"`
 	TelePool                 *TelePool  `json:"tele_pool" yaml:"tele_pool"`
 	LogLevel                 string     `json:"log_level" yaml:"log_level"`
-	RestoreFile              string     `json:"restore_file" yaml:"restore_file"`
-	BlockTime                uint64     `json:"block_time_s" yaml:"block_time_s"`
 	Headers                  *Headers   `json:"headers" yaml:"headers"`
 	LogFilePath              string     `json:"log_to" yaml:"log_to"`
 	JSONRPCBatchRequestLimit uint64     `json:"json_rpc_batch_request_limit" yaml:"json_rpc_batch_request_limit"`
@@ -87,9 +84,8 @@ const (
 func DefaultConfig() *Config {
 	defaultNetworkConfig := network.DefaultConfig()
 	return &Config{
-		GenesisPath:    "./genesis.json",
-		DataDir:        "",
-		BlockGasTarget: "0x0", // Special value signaling the parent gas limit should be applied
+		GenesisPath: "./genesis.json",
+		DataDir:     "",
 		Network: &Network{
 			NoDiscover:       defaultNetworkConfig.NoDiscover,
 			MaxPeers:         defaultNetworkConfig.MaxPeers,
@@ -113,8 +109,7 @@ func DefaultConfig() *Config {
 			MaxSlots:           4096,
 			MaxAccountEnqueued: 128,
 		},
-		LogLevel:    "INFO",
-		RestoreFile: "",
+		LogLevel: "INFO",
 		Headers: &Headers{
 			AccessControlAllowOrigins: []string{"*"},
 		},
