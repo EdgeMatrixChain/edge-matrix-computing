@@ -3,11 +3,14 @@ package server
 import (
 	"errors"
 	"fmt"
+	appAgent "github.com/emc-protocol/edge-matrix-computing/agent"
 	cmdConfig "github.com/emc-protocol/edge-matrix-computing/command/server/config"
 	"github.com/emc-protocol/edge-matrix-core/core/application"
 	"github.com/emc-protocol/edge-matrix-core/core/application/proof"
 	"github.com/emc-protocol/edge-matrix-core/core/crypto"
+	"github.com/emc-protocol/edge-matrix-core/core/jsonrpc"
 	"github.com/emc-protocol/edge-matrix-core/core/relay"
+	"github.com/emc-protocol/edge-matrix-core/core/types"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
 	"net"
@@ -41,6 +44,9 @@ const (
 type Server struct {
 	logger hclog.Logger
 	config *Config
+
+	// jsonrpc stack
+	jsonrpcServer *jsonrpc.JSONRPC
 
 	// system grpc server
 	grpcServer *grpc.Server
@@ -108,6 +114,45 @@ func newLoggerFromConfig(config *Config) (hclog.Logger, error) {
 	}
 
 	return newCLILogger(config), nil
+}
+
+func (s *Server) doAppNodeBind(nodeId string) error {
+	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	err := agent.BindAppNode(nodeId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) getAppOrigin() (error, string) {
+	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	err, appOrigin := agent.GetAppOrigin()
+	if err != nil {
+		return err, ""
+	}
+	return nil, appOrigin
+}
+
+func (s *Server) GetAppIdl() (error, string) {
+	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	err, appOrigin := agent.GetAppOrigin()
+	if err != nil {
+		return err, ""
+	}
+	return nil, appOrigin
+}
+
+func (s *Server) validAppNode(nodeId string) (error, bool) {
+	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	err, bondNodeId := agent.GetAppNode()
+	if err != nil {
+		return err, false
+	}
+	if bondNodeId == nodeId {
+		return nil, true
+	}
+	return nil, false
 }
 
 // NewServer creates a new Minimal server, using the passed in configuration
@@ -221,6 +266,18 @@ func NewServer(config *Config) (*Server, error) {
 
 		endpoint.SetSigner(proof.NewEIP155Signer(proof.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId)))
 
+		// bind app node
+		err = m.doAppNodeBind(endpointHost.ID().String())
+		if err != nil {
+			m.logger.Error("doAppNodeBind", "err", err.Error())
+		}
+
+		err, appOrigin := m.getAppOrigin()
+		if err != nil {
+			m.logger.Error("getAppOrigin", "err", err.Error())
+		}
+		endpoint.SetAppOrigin(appOrigin)
+
 		endpoint.AddHandler("/alive", func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
 			resp := fmt.Sprintf("{\"time\":\"%s\"}", time.Now().String())
@@ -229,7 +286,7 @@ func NewServer(config *Config) (*Server, error) {
 
 		endpoint.AddHandler("/idl", func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			err, appIdl := endpoint.GetAppIdl()
+			err, appIdl := m.GetAppIdl()
 			if err != nil {
 				// Fetch idl json text through GET #{appUrl}/getAppIdl
 				idlData, err := os.ReadFile("idl.json")
@@ -258,23 +315,22 @@ func NewServer(config *Config) (*Server, error) {
 			syncAppclient := application.NewSyncAppPeerClient(m.logger, m.edgeNetwork, m.edgeNetwork.GetHost(), endpoint)
 			m.syncAppPeerClient = syncAppclient
 
-			//syncer := application.NewSyncer(
-			//	m.logger,
-			//	syncAppclient,
-			//	application.NewSyncAppPeerService(m.logger, m.edgeNetwork, endpoint, m.blockchain, minerAgent),
-			//	m.edgeNetwork.GetHost(),
-			//	m.blockchain,
-			//	endpoint)
-			//// start app status syncer
-			//err = syncer.Start(true)
-			//if err != nil {
-			//	return nil, err
-			//}
+			syncer := application.NewSyncer(
+				m.logger,
+				syncAppclient,
+				application.NewSyncAppPeerService(m.logger, m.edgeNetwork, endpoint),
+				m.edgeNetwork.GetHost(),
+				endpoint)
+			// start app status syncer
+			err = syncer.Start(true)
+			if err != nil {
+				return nil, err
+			}
 
 			// setup and start jsonrpc server
-			//if err := m.setupJSONRPC(); err != nil {
-			//	return nil, err
-			//}
+			if err := m.setupJSONRPC(); err != nil {
+				return nil, err
+			}
 
 			// start relay server
 			if config.RelayAddr.Port > 0 {
@@ -342,6 +398,46 @@ func (s *Server) setupSecretsManager() error {
 	}
 
 	s.secretsManager = secretsManager
+
+	return nil
+}
+
+type jsonRPCHub struct {
+	//*telepool.TelegramPool
+	*network.Server
+	application.SyncAppPeerClient
+}
+
+func (j jsonRPCHub) AddTele(tx *types.Telegram) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (j *jsonRPCHub) GetPeers() int {
+	return len(j.Server.Peers())
+}
+
+// setupJSONRCP sets up the JSONRPC server, using the set configuration
+func (s *Server) setupJSONRPC() error {
+	hub := &jsonRPCHub{
+		//TelegramPool:       s.telepool,
+		Server:            s.edgeNetwork,
+		SyncAppPeerClient: s.syncAppPeerClient,
+	}
+	conf := &jsonrpc.Config{
+		Store:                    hub,
+		Addr:                     s.config.JSONRPC.JSONRPCAddr,
+		NetworkID:                uint64(s.config.GenesisConfig.NetworkId),
+		ChainName:                s.config.GenesisConfig.Name,
+		AccessControlAllowOrigin: s.config.JSONRPC.AccessControlAllowOrigin,
+	}
+
+	srv, err := jsonrpc.NewJSONRPC(s.logger, conf)
+	if err != nil {
+		return err
+	}
+
+	s.jsonrpcServer = srv
 
 	return nil
 }
