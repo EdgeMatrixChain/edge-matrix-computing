@@ -61,6 +61,9 @@ type Server struct {
 	// relay server
 	relayServer *relay.RelayServer
 
+	// app peers syncer
+	appPeerSyncer application.Syncer
+
 	// application syncer Client
 	syncAppPeerClient application.SyncAppPeerClient
 
@@ -69,6 +72,10 @@ type Server struct {
 
 	// running mode
 	runningMode RunningModeType
+}
+
+func (s *Server) GetAppPeer(id string) *application.AppPeer {
+	return s.appPeerSyncer.GetAppPeer(id)
 }
 
 func (s *Server) GetRelayHost() host.Host {
@@ -334,6 +341,7 @@ func NewServer(config *Config) (*Server, error) {
 			if err != nil {
 				return nil, err
 			}
+			m.appPeerSyncer = syncer
 
 			// setup and start jsonrpc server
 			if err := m.setupJSONRPC(); err != nil {
