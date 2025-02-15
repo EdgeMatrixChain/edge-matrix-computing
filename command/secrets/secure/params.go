@@ -14,7 +14,6 @@ const (
 	ecdsaFlag      = "ecdsa"
 	blsFlag        = "bls"
 	networkFlag    = "network"
-	icpFlag        = "icp"
 	localStoreFlag = "local-storage"
 	numFlag        = "num"
 )
@@ -30,12 +29,11 @@ var (
 )
 
 type initParams struct {
-	dataDir              string
-	configPath           string
-	generatesECDSA       bool
-	generatesBLS         bool
-	generatesNetwork     bool
-	generatesICPIdentity bool
+	dataDir          string
+	configPath       string
+	generatesECDSA   bool
+	generatesBLS     bool
+	generatesNetwork bool
 
 	ensecureLocalStore bool
 
@@ -116,12 +114,6 @@ func (ip *initParams) encryptValidatorKey(secretsPass string) error {
 
 	if ip.generatesBLS {
 		if err = helper.EncryptBLSValidatorKey(ip.secretsManager, secretsPass); err != nil {
-			return err
-		}
-	}
-
-	if ip.generatesICPIdentity {
-		if err = helper.EncryptICPIdentityKey(ip.secretsManager, secretsPass); err != nil {
 			return err
 		}
 	}
