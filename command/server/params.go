@@ -41,6 +41,7 @@ const (
 	runningModeFlag = "running-mode"
 	appNameFlag     = "app-name"
 	appUrlFlag      = "app-url"
+	appPortFlag     = "app-default-port"
 	//appOriginFlag = "app-origin"
 )
 
@@ -177,7 +178,7 @@ func (p *serverParams) generateConfig() *server.Config {
 		RunningMode: p.rawConfig.RunningMode,
 		AppName:     p.rawConfig.AppName,
 		AppUrl:      p.rawConfig.AppUrl,
-
-		EmcHost: p.rawConfig.EmcHost,
+		AppPort:     p.rawConfig.AppPort,
+		EmcHost:     p.rawConfig.EmcHost,
 	}
 }
