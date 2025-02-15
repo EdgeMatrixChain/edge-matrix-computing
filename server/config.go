@@ -46,6 +46,7 @@ type Config struct {
 
 	AppName     string
 	AppUrl      string
+	AppPort     uint64
 	AppOrigin   string
 	RunningMode string
 

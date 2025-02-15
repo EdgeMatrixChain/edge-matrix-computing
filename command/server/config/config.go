@@ -36,6 +36,7 @@ type Config struct {
 	RunningMode    string `json:"running_mode,omitempty" yaml:"running_mode,omitempty"`
 	ConsensusOn    bool   `json:"consensus_on,omitempty" yaml:"consensus_on,omitempty"`
 	AppUrl         string `json:"app_url,omitempty" yaml:"app_url,omitempty"`
+	AppPort        uint64 `json:"app_port,omitempty" yaml:"app_port,omitempty"`
 	AppName        string `json:"app_name,omitempty" yaml:"app_name,omitempty"`
 	//AppOrigin string `json:"app_origin,omitempty" yaml:"app_origin,omitempty"`
 	EmcHost string `json:"emc_host,omitempty" yaml:"emc_host,omitempty"`
