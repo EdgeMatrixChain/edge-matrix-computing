@@ -430,7 +430,7 @@ type jsonRPCHub struct {
 }
 
 func (j jsonRPCHub) AddTele(tx *types.Telegram) (string, error) {
-	//TODO implement me
+	//TODO implement AddTele
 	panic("implement me")
 }
 
