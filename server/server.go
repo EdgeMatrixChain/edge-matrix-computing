@@ -80,8 +80,7 @@ func (s *Server) GetNetworkHost() host.Host {
 }
 
 var dirPaths = []string{
-	"blockchain",
-	"trie",
+	"db",
 }
 
 // newFileLogger returns logger instance that writes all logs to a specified file.
@@ -126,7 +125,7 @@ func newLoggerFromConfig(config *Config) (hclog.Logger, error) {
 }
 
 func (s *Server) doAppNodeBind(nodeId string) error {
-	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
 	err := agent.BindAppNode(nodeId)
 	if err != nil {
 		return err
@@ -135,7 +134,7 @@ func (s *Server) doAppNodeBind(nodeId string) error {
 }
 
 func (s *Server) getAppOrigin() (error, string) {
-	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
 	err, appOrigin := agent.GetAppOrigin()
 	if err != nil {
 		return err, ""
@@ -144,7 +143,7 @@ func (s *Server) getAppOrigin() (error, string) {
 }
 
 func (s *Server) GetAppIdl() (error, string) {
-	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
 	err, appOrigin := agent.GetAppOrigin()
 	if err != nil {
 		return err, ""
@@ -153,7 +152,7 @@ func (s *Server) GetAppIdl() (error, string) {
 }
 
 func (s *Server) validAppNode(nodeId string) (error, bool) {
-	agent := appAgent.NewAppAgent(s.config.AppUrl)
+	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
 	err, bondNodeId := agent.GetAppNode()
 	if err != nil {
 		return err, false
@@ -268,7 +267,7 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, err
 		}
 
-		endpoint, err := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.runningMode == RunningModeEdge)
+		endpoint, err := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.config.AppPort, m.runningMode == RunningModeEdge)
 		if err != nil {
 			return nil, err
 		}
@@ -509,8 +508,10 @@ func (s *Server) JoinPeer(rawPeerMultiaddr string) error {
 // Close closes the Minimal server (blockchain, networking, consensus)
 func (s *Server) Close() {
 	// Close the networking layer
-	if err := s.edgeNetwork.Close(); err != nil {
-		s.logger.Error("failed to close networking", "err", err.Error())
+	if s.edgeNetwork != nil {
+		if err := s.edgeNetwork.Close(); err != nil {
+			s.logger.Error("failed to close networking", "err", err.Error())
+		}
 	}
 
 	// Close DataDog profiler

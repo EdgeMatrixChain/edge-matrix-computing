@@ -170,8 +170,15 @@ func setFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(
 		&params.rawConfig.AppUrl,
 		appUrlFlag,
-		"http://172.17.0.1:9527",
+		"http://172.17.0.1",
 		"the url for application",
+	)
+
+	cmd.Flags().Uint64Var(
+		&params.rawConfig.AppPort,
+		appPortFlag,
+		9527,
+		"the port for application",
 	)
 
 	cmd.Flags().Uint64Var(
