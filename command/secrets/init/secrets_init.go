@@ -86,13 +86,6 @@ func setFlags(cmd *cobra.Command) {
 	)
 
 	cmd.Flags().BoolVar(
-		&basicParams.generatesICPIdentity,
-		icpFlag,
-		false,
-		"the flag indicating whether new ICP identity key is created",
-	)
-
-	cmd.Flags().BoolVar(
 		&basicParams.insecureLocalStore,
 		localStoreFlag,
 		true,
@@ -145,13 +138,12 @@ func getParamsList() []initParams {
 	paramsList := make([]initParams, initNumber)
 	for i := 1; i <= initNumber; i++ {
 		paramsList[i-1] = initParams{
-			dataDir:              fmt.Sprintf("%s%d", basicParams.dataDir, i),
-			configPath:           basicParams.configPath,
-			generatesECDSA:       basicParams.generatesECDSA,
-			generatesBLS:         basicParams.generatesBLS,
-			generatesNetwork:     basicParams.generatesNetwork,
-			generatesICPIdentity: basicParams.generatesICPIdentity,
-			insecureLocalStore:   basicParams.insecureLocalStore,
+			dataDir:            fmt.Sprintf("%s%d", basicParams.dataDir, i),
+			configPath:         basicParams.configPath,
+			generatesECDSA:     basicParams.generatesECDSA,
+			generatesBLS:       basicParams.generatesBLS,
+			generatesNetwork:   basicParams.generatesNetwork,
+			insecureLocalStore: basicParams.insecureLocalStore,
 		}
 	}
 
