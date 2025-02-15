@@ -11,7 +11,7 @@ help: Makefile
 	@echo
 
 	@echo "Important targets:"
-	@printf "  %-35s - %s\n" "import-core" "First step before you build the project"
+	@printf "  %-35s - %s\n" "import-core" "Do it before you first build"
 	@printf "  %-35s - %s\n" "get" "Downloading & Installing all the modules"
 	@printf "  %-35s - %s\n" "build" "Build the project"
 
