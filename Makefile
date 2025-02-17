@@ -24,6 +24,9 @@ check-go:
 check-protoc:
 	@which protoc > /dev/null || (echo "protoc is not installed. Please install and try again."; exit 1)
 
+protoc:
+	protoc --go_out=. --go-grpc_out=. ./server/proto/*.proto
+
 get:
 	@echo "  >  \033[32mDownloading & Installing all the modules...\033[0m "
 	go mod tidy && go mod download
@@ -34,6 +37,39 @@ build: check-go check-git
 	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))
 	$(eval VERSION = $(shell git tag --points-at ${COMMIT_HASH}))
 	go build -o build/edge-matrix-computing -ldflags="\
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Version=$(VERSION)' \
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Branch=$(BRANCH)' \
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Build=$(COMMIT_HASH)'"\
+    main.go
+
+build-linux-amd64: check-go check-git
+	@echo "  >  \033[32mBuilding linux-amd64 binary...\033[0m "
+	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
+	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))
+	$(eval VERSION = $(shell git tag --points-at ${COMMIT_HASH}))
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/linux-amd64/edge-matrix-computing -ldflags="\
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Version=$(VERSION)' \
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Branch=$(BRANCH)' \
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Build=$(COMMIT_HASH)'"\
+    main.go
+
+build-windows-amd64: check-go check-git
+	@echo "  >  \033[32mBuilding windows-amd64 binary...\033[0m "
+	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
+	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))
+	$(eval VERSION = $(shell git tag --points-at ${COMMIT_HASH}))
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o build/windows-amd64/edge-matrix-computing.exe -ldflags="\
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Version=$(VERSION)' \
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Branch=$(BRANCH)' \
+         -X 'github.com/emc-protocol/edge-matrix-core/versioning.Build=$(COMMIT_HASH)'"\
+    main.go
+
+build-darwin-arm64: check-go check-git
+	@echo "  >  \033[32mBuilding darwin-arm64 binary...\033[0m "
+	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
+	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))
+	$(eval VERSION = $(shell git tag --points-at ${COMMIT_HASH}))
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o build/darwin-arm64/edge-matrix-computing -ldflags="\
          -X 'github.com/emc-protocol/edge-matrix-core/versioning.Version=$(VERSION)' \
          -X 'github.com/emc-protocol/edge-matrix-core/versioning.Branch=$(BRANCH)' \
          -X 'github.com/emc-protocol/edge-matrix-core/versioning.Build=$(COMMIT_HASH)'"\
