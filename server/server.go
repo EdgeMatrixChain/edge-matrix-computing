@@ -31,6 +31,8 @@ import (
 
 type RunningModeType string
 
+const DefaultAppBindSyncDuration = 15 * time.Second
+
 const (
 	RunningModeFull RunningModeType = "full"
 	RunningModeEdge RunningModeType = "edge"
@@ -323,6 +325,27 @@ func NewServer(config *Config) (*Server, error) {
 			if err != nil {
 				return nil, err
 			}
+
+			// do app binding
+			go func() {
+				ticker := time.NewTicker(DefaultAppBindSyncDuration)
+				for {
+					err = m.doAppNodeBind(endpointHost.ID().String())
+					if err != nil {
+						m.logger.Error("doAppNodeBind", "err", err.Error())
+					}
+
+					err, appOrigin := m.getAppOrigin()
+					if err != nil {
+						m.logger.Error("getAppOrigin", "err", err.Error())
+					}
+					endpoint.SetAppOrigin(appOrigin)
+
+					m.logger.Info("binding", "NodeID", endpointHost.ID().String(), "AppOrigin", appOrigin)
+				}
+				ticker.Stop()
+			}()
+
 		}
 
 		if m.runningMode == RunningModeFull {
