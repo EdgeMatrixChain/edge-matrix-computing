@@ -7,6 +7,7 @@ import (
 	"github.com/emc-protocol/edge-matrix-computing/command/peers"
 	"github.com/emc-protocol/edge-matrix-computing/command/secrets"
 	"github.com/emc-protocol/edge-matrix-computing/command/server"
+	"github.com/emc-protocol/edge-matrix-computing/command/version"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -33,6 +34,7 @@ func NewRootCommand() *RootCommand {
 func (rc *RootCommand) registerSubCommands() {
 	rc.baseCmd.AddCommand(
 		genesis.GetCommand(),
+		version.GetCommand(),
 		secrets.GetCommand(),
 		server.GetCommand(),
 		peers.GetCommand(),
