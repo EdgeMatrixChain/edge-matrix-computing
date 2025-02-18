@@ -181,6 +181,13 @@ func setFlags(cmd *cobra.Command) {
 		"the port for application",
 	)
 
+	cmd.Flags().BoolVar(
+		&params.rawConfig.AppNoAuth,
+		appNoAuthFlag,
+		false,
+		"should the application no authentication required (default false)",
+	)
+
 	cmd.Flags().Uint64Var(
 		&params.rawConfig.TelePool.MaxSlots,
 		maxSlotsFlag,
