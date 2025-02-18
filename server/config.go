@@ -19,7 +19,7 @@ type Config struct {
 	GenesisConfig *config.GenesisConfig
 
 	JSONRPC          *JSONRPC
-	TransparentProxy *TransparentProxy
+	TransparentProxy *TransparentProxyConfig
 	GRPCAddr         *net.TCPAddr
 	LibP2PAddr       *net.TCPAddr
 	RelayAddr        *net.TCPAddr // the relay address
@@ -49,6 +49,7 @@ type Config struct {
 	AppPort     uint64
 	AppOrigin   string
 	RunningMode string
+	AppNoAuth   bool
 
 	EmcHost string
 }
@@ -66,7 +67,7 @@ type JSONRPC struct {
 	BlockRangeLimit          uint64
 }
 
-type TransparentProxy struct {
+type TransparentProxyConfig struct {
 	ProxyAddr                *net.TCPAddr
 	AccessControlAllowOrigin []string
 }
