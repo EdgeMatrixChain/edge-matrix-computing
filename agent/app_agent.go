@@ -13,11 +13,10 @@ type AppAgent struct {
 }
 
 func NewAppAgent(appPath string) *AppAgent {
-	poc := &AppAgent{
+	return &AppAgent{
 		httpClient: rpc.NewDefaultHttpClient(),
 		appPath:    appPath,
 	}
-	return poc
 }
 
 type GetDataResponse struct {
@@ -27,13 +26,24 @@ type GetDataResponse struct {
 func (p *AppAgent) BindAppNode(nodeId string) (err error) {
 	err = nil
 	apiUrl := p.appPath + "/hubapi/v1/bindNode"
-	bindReq := `{
-      "nodeId":"%s"
-    }`
+	bindReq := `{"nodeId":"%s"}`
 	postJson := fmt.Sprintf(bindReq, nodeId)
 	_, err = p.httpClient.SendPostJsonRequest(apiUrl, []byte(postJson))
 	if err != nil {
 		err = errors.New("BindNode error:" + err.Error())
+		return
+	}
+	return
+}
+
+func (p *AppAgent) ValidateApiKey(apiKey string) (err error) {
+	err = nil
+	apiUrl := p.appPath + "/hubapi/v1/validateApiKey"
+	data := `{"apiKey":"%s"}`
+	postJson := fmt.Sprintf(data, apiKey)
+	_, err = p.httpClient.SendPostJsonRequest(apiUrl, []byte(postJson))
+	if err != nil {
+		err = errors.New("ValidateApiKey error:" + err.Error())
 		return
 	}
 	return
