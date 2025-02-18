@@ -1,10 +1,14 @@
 package server
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	appAgent "github.com/emc-protocol/edge-matrix-computing/agent"
 	cmdConfig "github.com/emc-protocol/edge-matrix-computing/command/server/config"
+	"github.com/emc-protocol/edge-matrix-computing/proxy"
 	"github.com/emc-protocol/edge-matrix-core/core/application"
 	"github.com/emc-protocol/edge-matrix-core/core/application/proof"
 	"github.com/emc-protocol/edge-matrix-core/core/crypto"
@@ -13,10 +17,12 @@ import (
 	"github.com/emc-protocol/edge-matrix-core/core/types"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
+	"io"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/emc-protocol/edge-matrix-computing/server/proto"
@@ -48,8 +54,10 @@ type Server struct {
 	config *Config
 
 	// jsonrpc stack
-	jsonrpcServer   *web3.JSONRPC
-	edgeProxyServer *application.TransparentProxy
+	jsonrpcServer *web3.JSONRPC
+
+	// http transparent proxy
+	edgeProxyServer *proxy.TransparentProxy
 
 	// system grpc server
 	grpcServer *grpc.Server
@@ -69,11 +77,24 @@ type Server struct {
 	// application syncer Client
 	syncAppPeerClient application.SyncAppPeerClient
 
+	// edge matrix app agent
+	appAgent *appAgent.AppAgent
+
 	// secrets manager
 	secretsManager secrets.SecretsManager
 
 	// running mode
 	runningMode RunningModeType
+}
+
+func (s *Server) ValidateBearer(bearer string) bool {
+	//TODO implement ValidateBearer
+	err := s.appAgent.ValidateApiKey(bearer)
+	if err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (s *Server) GetAppPeer(id string) *application.AppPeer {
@@ -134,8 +155,7 @@ func newLoggerFromConfig(config *Config) (hclog.Logger, error) {
 }
 
 func (s *Server) doAppNodeBind(nodeId string) error {
-	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
-	err := agent.BindAppNode(nodeId)
+	err := s.appAgent.BindAppNode(nodeId)
 	if err != nil {
 		return err
 	}
@@ -143,8 +163,7 @@ func (s *Server) doAppNodeBind(nodeId string) error {
 }
 
 func (s *Server) getAppOrigin() (error, string) {
-	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
-	err, appOrigin := agent.GetAppOrigin()
+	err, appOrigin := s.appAgent.GetAppOrigin()
 	if err != nil {
 		return err, ""
 	}
@@ -152,8 +171,7 @@ func (s *Server) getAppOrigin() (error, string) {
 }
 
 func (s *Server) GetAppIdl() (error, string) {
-	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
-	err, appOrigin := agent.GetAppOrigin()
+	err, appOrigin := s.appAgent.GetAppOrigin()
 	if err != nil {
 		return err, ""
 	}
@@ -161,8 +179,7 @@ func (s *Server) GetAppIdl() (error, string) {
 }
 
 func (s *Server) validAppNode(nodeId string) (error, bool) {
-	agent := appAgent.NewAppAgent(fmt.Sprintf("%s:%d", s.config.AppUrl, s.config.AppPort))
-	err, bondNodeId := agent.GetAppNode()
+	err, bondNodeId := s.appAgent.GetAppNode()
 	if err != nil {
 		return err, false
 	}
@@ -172,38 +189,19 @@ func (s *Server) validAppNode(nodeId string) (error, bool) {
 	return nil, false
 }
 
-// The proxyHandlerMiddlewareFactory builds a middleware which enables CORS using the provided config.
-func (s *Server) proxyHandlerMiddlewareFactory() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// set headers e.g:
-			// w.Header().Set("Content-Type", "application/json")
-			// w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			// w.Header().Set(
-			// 	"Access-Control-Allow-Headers",
-			//	"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
-			//)
-
-			origin := r.Header.Get("Authorization")
-
-			//origin := r.Header.Get("Origin")
-
-			for _, allowedOrigin := range s.config.TransparentProxy.AccessControlAllowOrigin {
-				if allowedOrigin == "*" {
-					w.Header().Set("Access-Control-Allow-Origin", "*")
-
-					break
-				}
-
-				if allowedOrigin == origin {
-					w.Header().Set("Access-Control-Allow-Origin", origin)
-
-					break
-				}
-			}
-			next.ServeHTTP(w, r)
-		})
+// getAPIKey from http.Request
+func getBearer(r *http.Request) string {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return ""
 	}
+
+	parts := strings.Split(authHeader, " ")
+	if len(parts) != 2 || parts[0] != "Bearer" {
+		return ""
+	}
+
+	return parts[1]
 }
 
 // NewServer creates a new Minimal server, using the passed in configuration
@@ -217,6 +215,7 @@ func NewServer(config *Config) (*Server, error) {
 		logger:     logger.Named("server"),
 		config:     config,
 		grpcServer: grpc.NewServer(),
+		appAgent:   appAgent.NewAppAgent(fmt.Sprintf("%s:%d", config.AppUrl, config.AppPort)),
 	}
 
 	if m.config.RunningMode == cmdConfig.DefaultRunningMode {
@@ -353,6 +352,89 @@ func NewServer(config *Config) (*Server, error) {
 				}
 			}
 		})
+
+		endpoint.AddHandler(proxy.TransparentForwardUrl, func(w http.ResponseWriter, r *http.Request) {
+			m.logger.Debug(proxy.TransparentForwardUrl, "RemoteAddr", r.RemoteAddr, "Host", r.Host)
+
+			bearer := getBearer(r)
+			if bearer == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
+				return
+			}
+
+			if !m.config.AppNoAuth && !m.ValidateBearer(bearer) {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
+				return
+			}
+
+			defer r.Body.Close()
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				_, _ = w.Write([]byte(err.Error()))
+				return
+			}
+
+			var transForward proxy.TransparentForward
+			if err := json.Unmarshal(body, &transForward); err != nil {
+				_, _ = w.Write([]byte(err.Error()))
+				return
+			}
+
+			client := &http.Client{}
+			targetURL := fmt.Sprintf("%s:%d/%s", m.config.AppUrl, transForward.EdgePath.Port, transForward.EdgePath.InterfaceURL)
+			m.logger.Debug(proxy.TransparentForwardUrl, "targetURL", targetURL)
+
+			req, err := http.NewRequest(r.Method, targetURL, bytes.NewReader([]byte(transForward.Payload)))
+			if err != nil {
+				http.Error(w, "Failed to create request", http.StatusInternalServerError)
+				return
+			}
+
+			for key, values := range r.Header {
+				for _, value := range values {
+					req.Header.Add(key, value)
+				}
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				http.Error(w, "Failed to connect to target server", http.StatusInternalServerError)
+				return
+			}
+			defer resp.Body.Close()
+
+			for key, value := range resp.Header {
+				w.Header().Set(key, value[0])
+			}
+			w.WriteHeader(resp.StatusCode)
+			if resp.Header.Get("Content-Type") == "text/event-stream" {
+				reader := bufio.NewReader(resp.Body)
+				for {
+					line, err := reader.ReadBytes('\n')
+					if err != nil {
+						if err == io.EOF {
+							m.logger.Warn(proxy.TransparentForwardUrl, "err", "SSE stream closed by server")
+							return
+						}
+						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error reading SSE stream: %v\n", err))
+						return
+					}
+
+					_, err = w.Write(line)
+					if err != nil {
+						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error writing to client: %v\n", err))
+						return
+					}
+
+					w.(http.Flusher).Flush()
+				}
+			} else {
+				io.Copy(w, resp.Body)
+			}
+		})
+
 		if m.runningMode == RunningModeEdge {
 			// keep edge peer alive
 			err := m.relayClient.StartAlive(endpoint.SubscribeEvents())
@@ -408,7 +490,7 @@ func NewServer(config *Config) (*Server, error) {
 			}
 
 			// setup and start transparent proxy server
-			if err := m.setupTransparentProxy(m.proxyHandlerMiddlewareFactory); err != nil {
+			if err := m.setupTransparentProxy(); err != nil {
 				return nil, err
 			}
 
@@ -523,8 +605,8 @@ func (s *Server) setupJSONRPC() error {
 }
 
 // setupTransparentProxy sets up the edge transparent proxy server, using the set configuration
-func (s *Server) setupTransparentProxy(middlewareFactory application.MiddlewareFactory) error {
-	conf := &application.Config{
+func (s *Server) setupTransparentProxy() error {
+	conf := &proxy.Config{
 		Store:                    s,
 		Addr:                     s.config.TransparentProxy.ProxyAddr,
 		NetworkID:                uint64(s.config.GenesisConfig.NetworkId),
@@ -532,7 +614,7 @@ func (s *Server) setupTransparentProxy(middlewareFactory application.MiddlewareF
 		AccessControlAllowOrigin: s.config.TransparentProxy.AccessControlAllowOrigin,
 	}
 
-	srv, err := application.NewTransportProxy(s.logger, conf, middlewareFactory)
+	srv, err := proxy.NewTransportProxy(s.logger, conf, nil)
 	if err != nil {
 		return err
 	}
