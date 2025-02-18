@@ -42,7 +42,7 @@ const (
 	appNameFlag     = "app-name"
 	appUrlFlag      = "app-url"
 	appPortFlag     = "app-default-port"
-	//appOriginFlag = "app-origin"
+	appNoAuthFlag   = "app-no-auth"
 )
 
 const (
@@ -136,7 +136,7 @@ func (p *serverParams) setJSONLogFormat(jsonLogFormat bool) {
 func (p *serverParams) generateConfig() *server.Config {
 	return &server.Config{
 		GenesisConfig: p.genesisConfig,
-		TransparentProxy: &server.TransparentProxy{
+		TransparentProxy: &server.TransparentProxyConfig{
 			ProxyAddr:                p.transparentProxyAddress,
 			AccessControlAllowOrigin: p.corsAllowedOrigins,
 		},
@@ -179,6 +179,8 @@ func (p *serverParams) generateConfig() *server.Config {
 		AppName:     p.rawConfig.AppName,
 		AppUrl:      p.rawConfig.AppUrl,
 		AppPort:     p.rawConfig.AppPort,
-		EmcHost:     p.rawConfig.EmcHost,
+		AppNoAuth:   p.rawConfig.AppNoAuth,
+
+		EmcHost: p.rawConfig.EmcHost,
 	}
 }
