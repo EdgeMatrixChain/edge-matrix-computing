@@ -172,6 +172,40 @@ func (s *Server) validAppNode(nodeId string) (error, bool) {
 	return nil, false
 }
 
+// The proxyHandlerMiddlewareFactory builds a middleware which enables CORS using the provided config.
+func (s *Server) proxyHandlerMiddlewareFactory() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// set headers e.g:
+			// w.Header().Set("Content-Type", "application/json")
+			// w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			// w.Header().Set(
+			// 	"Access-Control-Allow-Headers",
+			//	"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
+			//)
+
+			origin := r.Header.Get("Authorization")
+
+			//origin := r.Header.Get("Origin")
+
+			for _, allowedOrigin := range s.config.TransparentProxy.AccessControlAllowOrigin {
+				if allowedOrigin == "*" {
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+
+					break
+				}
+
+				if allowedOrigin == origin {
+					w.Header().Set("Access-Control-Allow-Origin", origin)
+
+					break
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // NewServer creates a new Minimal server, using the passed in configuration
 func NewServer(config *Config) (*Server, error) {
 	logger, err := newLoggerFromConfig(config)
@@ -330,6 +364,8 @@ func NewServer(config *Config) (*Server, error) {
 			go func() {
 				ticker := time.NewTicker(DefaultAppBindSyncDuration)
 				for {
+					<-ticker.C
+
 					err = m.doAppNodeBind(endpointHost.ID().String())
 					if err != nil {
 						m.logger.Error("doAppNodeBind", "err", err.Error())
@@ -372,7 +408,7 @@ func NewServer(config *Config) (*Server, error) {
 			}
 
 			// setup and start transparent proxy server
-			if err := m.setupTransparentProxy(); err != nil {
+			if err := m.setupTransparentProxy(m.proxyHandlerMiddlewareFactory); err != nil {
 				return nil, err
 			}
 
@@ -487,7 +523,7 @@ func (s *Server) setupJSONRPC() error {
 }
 
 // setupTransparentProxy sets up the edge transparent proxy server, using the set configuration
-func (s *Server) setupTransparentProxy() error {
+func (s *Server) setupTransparentProxy(middlewareFactory application.MiddlewareFactory) error {
 	conf := &application.Config{
 		Store:                    s,
 		Addr:                     s.config.TransparentProxy.ProxyAddr,
@@ -496,7 +532,7 @@ func (s *Server) setupTransparentProxy() error {
 		AccessControlAllowOrigin: s.config.TransparentProxy.AccessControlAllowOrigin,
 	}
 
-	srv, err := application.NewTransportProxy(s.logger, conf)
+	srv, err := application.NewTransportProxy(s.logger, conf, middlewareFactory)
 	if err != nil {
 		return err
 	}
