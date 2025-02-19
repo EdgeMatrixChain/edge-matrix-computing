@@ -50,6 +50,7 @@ type Config struct {
 	AppOrigin   string
 	RunningMode string
 	AppNoAuth   bool
+	AppNoAgent  bool
 
 	EmcHost string
 }
