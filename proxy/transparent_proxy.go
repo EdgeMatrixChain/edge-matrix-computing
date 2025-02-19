@@ -3,6 +3,7 @@ package proxy
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/emc-protocol/edge-matrix-core/core/application"
@@ -104,7 +105,7 @@ func (j *TransparentProxy) setupHTTP(middlewareFactory MiddlewareFactory) error 
 	if middlewareFactory != nil {
 		mux.Handle("/", middlewareFactory(j.config)(proxyHandler))
 	} else {
-		mux.Handle("/", defaultMiddlewareFactory(j.config)(proxyHandler))
+		mux.Handle("/", j.defaultMiddlewareFactory()(proxyHandler))
 	}
 
 	// TODO implement websocket handler
@@ -143,13 +144,6 @@ func getBearer(r *http.Request) string {
 func (j *TransparentProxy) BearerMiddlewareFactory() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// set headers e.g:
-			// w.Header().Set("Content-Type", "application/json")
-			// w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-			// w.Header().Set(
-			// 	"Access-Control-Allow-Headers",
-			//	"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
-			//)
 			// verify bearer
 			bearer := getBearer(r)
 			if bearer == "" {
@@ -177,18 +171,34 @@ func (j *TransparentProxy) BearerMiddlewareFactory() func(http.Handler) http.Han
 					break
 				}
 			}
-			next.ServeHTTP(w, r)
+
+			// add Header: Forwarded(RFC 7239),
+			// e.g Forwarded: proto=http; host="example.com:8080"; for="client_ip"
+			r.Header.Add("Forwarded", fmt.Sprintf("proto=%s; host=%s; for=%s", "p2phttp", r.Host, r.RemoteAddr))
+
+			pathInfo, err := ParseEdgePath(r)
+			if err != nil {
+				_, _ = w.Write([]byte(err.Error()))
+				return
+			}
+			j.logger.Info("handle", "NodeID", pathInfo.NodeID, "Port", pathInfo.Port, "InterfaceURL", pathInfo.InterfaceURL)
+
+			// add Header: X-Forwarded-Port, X-Forwarded-Host
+			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			r.Header.Add("X-Forwarded-Host", j.config.Store.GetRelayHost().ID().String())
+
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "EdgePath", pathInfo)))
 		})
 	}
 }
 
 // The defaultMiddlewareFactory builds a middleware which enables CORS using the provided config.
-func defaultMiddlewareFactory(config *Config) func(http.Handler) http.Handler {
+func (j *TransparentProxy) defaultMiddlewareFactory() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 
-			for _, allowedOrigin := range config.AccessControlAllowOrigin {
+			for _, allowedOrigin := range j.config.AccessControlAllowOrigin {
 				if allowedOrigin == "*" {
 					w.Header().Set("Access-Control-Allow-Origin", "*")
 
@@ -201,7 +211,21 @@ func defaultMiddlewareFactory(config *Config) func(http.Handler) http.Handler {
 					break
 				}
 			}
-			next.ServeHTTP(w, r)
+			// add Header: Forwarded(RFC 7239),
+			// e.g Forwarded: proto=http; host="example.com:8080"; for="client_ip"
+			r.Header.Add("Forwarded", fmt.Sprintf("proto=%s; host=%s; for=%s", "p2phttp", r.Host, r.RemoteAddr))
+
+			pathInfo, err := ParseEdgePath(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// add Header: X-Forwarded-Port, X-Forwarded-Host
+			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			r.Header.Add("X-Forwarded-Host", j.config.Store.GetRelayHost().ID().String())
+
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "EdgePath", pathInfo)))
 		})
 	}
 }
@@ -265,11 +289,12 @@ func ParseEdgePath(req *http.Request) (*EdgePath, error) {
 }
 
 func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Request) {
-	pathInfo, err := ParseEdgePath(req)
-	if err != nil {
-		_, _ = w.Write([]byte(err.Error()))
+	pathInfo, ok := req.Context().Value("EdgePath").(*EdgePath)
+	if !ok {
+		http.Error(w, "Invalid edge path", http.StatusBadRequest)
 		return
 	}
+
 	j.logger.Info("handle", "NodeID", pathInfo.NodeID, "Port", pathInfo.Port, "InterfaceURL", pathInfo.InterfaceURL)
 
 	// TODO verify NodeID by whitelist
@@ -277,7 +302,7 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 	defer req.Body.Close()
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		_, _ = w.Write([]byte(err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	// log request
@@ -287,7 +312,7 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 	// query node in PeerStore
 	appPeer := j.config.Store.GetAppPeer(pathInfo.NodeID)
 	if appPeer == nil {
-		http.Error(w, "Failed to find node", http.StatusInternalServerError)
+		http.Error(w, "Failed to find node", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -295,19 +320,19 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 	if appPeer.Relay != "" {
 		targetRelayInfo, err := peer.AddrInfoFromString(fmt.Sprintf("%s/p2p-circuit/p2p/%s", appPeer.Relay, pathInfo.NodeID))
 		if err != nil {
-			_, _ = w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		clientHost.Peerstore().AddAddrs(targetRelayInfo.ID, targetRelayInfo.Addrs, peerstore.RecentlyConnectedAddrTTL)
 	} else if appPeer.Addr != "" {
 		addrInfo, err := peer.AddrInfoFromString(fmt.Sprintf("%s/p2p/%s", appPeer.Addr, pathInfo.NodeID))
 		if err != nil {
-			_, _ = w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		clientHost.Peerstore().AddAddrs(addrInfo.ID, addrInfo.Addrs, peerstore.RecentlyConnectedAddrTTL)
 	} else {
-		http.Error(w, "Failed to find addr of node", http.StatusInternalServerError)
+		http.Error(w, "Failed to find addr of node", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -321,7 +346,7 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 	}
 	data, err := json.Marshal(transparentForwardData)
 	if err != nil {
-		http.Error(w, "Failed to marshal TransparentForward", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -341,8 +366,7 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 	// do request
 	resp, err := client.Do(request)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	defer resp.Body.Close()
 
