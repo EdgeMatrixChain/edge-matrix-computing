@@ -316,17 +316,19 @@ func NewServer(config *Config) (*Server, error) {
 
 		endpoint.SetSigner(proof.NewEIP155Signer(proof.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId)))
 
-		// bind app node
-		err = m.doAppNodeBind(endpointHost.ID().String())
-		if err != nil {
-			m.logger.Error("doAppNodeBind", "err", err.Error())
-		}
+		// bind app agent
+		if !m.config.AppNoAgent {
+			err = m.doAppNodeBind(endpointHost.ID().String())
+			if err != nil {
+				m.logger.Error("doAppNodeBind", "err", err.Error())
+			}
 
-		err, appOrigin := m.getAppOrigin()
-		if err != nil {
-			m.logger.Error("getAppOrigin", "err", err.Error())
+			err, appOrigin := m.getAppOrigin()
+			if err != nil {
+				m.logger.Error("getAppOrigin", "err", err.Error())
+			}
+			endpoint.SetAppOrigin(appOrigin)
 		}
-		endpoint.SetAppOrigin(appOrigin)
 
 		endpoint.AddHandler("/alive", func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
@@ -372,35 +374,51 @@ func NewServer(config *Config) (*Server, error) {
 			defer r.Body.Close()
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
-				_, _ = w.Write([]byte(err.Error()))
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+
 				return
 			}
 
 			var transForward proxy.TransparentForward
 			if err := json.Unmarshal(body, &transForward); err != nil {
-				_, _ = w.Write([]byte(err.Error()))
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+
 				return
 			}
 
 			client := &http.Client{}
-			targetURL := fmt.Sprintf("%s:%d/%s", m.config.AppUrl, transForward.EdgePath.Port, transForward.EdgePath.InterfaceURL)
+			var targetURL = ""
+			if m.config.AppNoAgent {
+				targetURL = fmt.Sprintf("%s:%d/%s", m.config.AppUrl, transForward.EdgePath.Port, transForward.EdgePath.InterfaceURL)
+			} else {
+				err, proxyPath := m.appAgent.GetProxyPath()
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+
+					return
+				}
+				targetURL = fmt.Sprintf("%s:%d/%s/%s", m.config.AppUrl, m.config.AppPort, proxyPath, transForward.EdgePath.InterfaceURL)
+			}
 			m.logger.Debug(proxy.TransparentForwardUrl, "targetURL", targetURL)
 
 			req, err := http.NewRequest(r.Method, targetURL, bytes.NewReader([]byte(transForward.Payload)))
 			if err != nil {
-				http.Error(w, "Failed to create request", http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+
 				return
 			}
 
 			for key, values := range r.Header {
 				for _, value := range values {
 					req.Header.Add(key, value)
+					m.logger.Debug(proxy.TransparentForwardUrl, key, value)
 				}
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
 				http.Error(w, "Failed to connect to target server", http.StatusInternalServerError)
+
 				return
 			}
 			defer resp.Body.Close()
@@ -415,16 +433,18 @@ func NewServer(config *Config) (*Server, error) {
 					line, err := reader.ReadBytes('\n')
 					if err != nil {
 						if err == io.EOF {
-							m.logger.Warn(proxy.TransparentForwardUrl, "err", "SSE stream closed by server")
+
 							return
 						}
 						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error reading SSE stream: %v\n", err))
+
 						return
 					}
 
 					_, err = w.Write(line)
 					if err != nil {
 						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error writing to client: %v\n", err))
+
 						return
 					}
 
@@ -442,28 +462,29 @@ func NewServer(config *Config) (*Server, error) {
 				return nil, err
 			}
 
-			// do app binding
-			go func() {
-				ticker := time.NewTicker(DefaultAppBindSyncDuration)
-				for {
-					<-ticker.C
+			// do agent binding
+			if !m.config.AppNoAgent {
+				go func() {
+					ticker := time.NewTicker(DefaultAppBindSyncDuration)
+					for {
+						<-ticker.C
 
-					err = m.doAppNodeBind(endpointHost.ID().String())
-					if err != nil {
-						m.logger.Error("doAppNodeBind", "err", err.Error())
+						err = m.doAppNodeBind(endpointHost.ID().String())
+						if err != nil {
+							m.logger.Error("doAppNodeBind", "err", err.Error())
+						}
+
+						err, appOrigin := m.getAppOrigin()
+						if err != nil {
+							m.logger.Error("getAppOrigin", "err", err.Error())
+						}
+						endpoint.SetAppOrigin(appOrigin)
+
+						m.logger.Info("binding", "NodeID", endpointHost.ID().String(), "AppOrigin", appOrigin)
 					}
-
-					err, appOrigin := m.getAppOrigin()
-					if err != nil {
-						m.logger.Error("getAppOrigin", "err", err.Error())
-					}
-					endpoint.SetAppOrigin(appOrigin)
-
-					m.logger.Info("binding", "NodeID", endpointHost.ID().String(), "AppOrigin", appOrigin)
-				}
-				ticker.Stop()
-			}()
-
+					ticker.Stop()
+				}()
+			}
 		}
 
 		if m.runningMode == RunningModeFull {
