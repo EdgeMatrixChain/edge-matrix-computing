@@ -35,11 +35,12 @@ type Config struct {
 	RelayDiscovery bool   `json:"relay_discovery,omitempty" yaml:"relay_discovery,omitempty"`
 	RunningMode    string `json:"running_mode,omitempty" yaml:"running_mode,omitempty"`
 
-	AppUrl    string `json:"app_url,omitempty" yaml:"app_url,omitempty"`
-	AppPort   uint64 `json:"app_port,omitempty" yaml:"app_port,omitempty"`
-	AppName   string `json:"app_name,omitempty" yaml:"app_name,omitempty"`
-	AppNoAuth bool   `json:"app_no_auth,omitempty" yaml:"app_no_auth,omitempty"`
-	EmcHost   string `json:"emc_host,omitempty" yaml:"emc_host,omitempty"`
+	AppUrl     string `json:"app_url,omitempty" yaml:"app_url,omitempty"`
+	AppPort    uint64 `json:"app_port,omitempty" yaml:"app_port,omitempty"`
+	AppName    string `json:"app_name,omitempty" yaml:"app_name,omitempty"`
+	AppNoAuth  bool   `json:"app_no_auth,omitempty" yaml:"app_no_auth,omitempty"`
+	AppNoAgent bool   `json:"app_no_agent,omitempty" yaml:"app_no_agent,omitempty"`
+	EmcHost    string `json:"emc_host,omitempty" yaml:"emc_host,omitempty"`
 }
 
 // Telemetry holds the config details for metric services.
