@@ -6,7 +6,7 @@ import (
 
 // Params are all the set of params for the config
 type Params struct {
-	ChainID    int64                  `json:"chainID"`
+	NetworkID  int64                  `json:"networkID"`
 	Engine     map[string]interface{} `json:"engine"`
 	Whitelists *Whitelists            `json:"whitelists,omitempty"`
 }
