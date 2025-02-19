@@ -43,6 +43,7 @@ const (
 	appUrlFlag      = "app-url"
 	appPortFlag     = "app-default-port"
 	appNoAuthFlag   = "app-no-auth"
+	appNoAgentFlag  = "app-no-agent"
 )
 
 const (
@@ -180,6 +181,7 @@ func (p *serverParams) generateConfig() *server.Config {
 		AppUrl:      p.rawConfig.AppUrl,
 		AppPort:     p.rawConfig.AppPort,
 		AppNoAuth:   p.rawConfig.AppNoAuth,
+		AppNoAgent:  p.rawConfig.AppNoAgent,
 
 		EmcHost: p.rawConfig.EmcHost,
 	}
