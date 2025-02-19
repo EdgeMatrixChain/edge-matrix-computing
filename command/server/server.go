@@ -188,6 +188,13 @@ func setFlags(cmd *cobra.Command) {
 		"should the application no authentication required (default false)",
 	)
 
+	cmd.Flags().BoolVar(
+		&params.rawConfig.AppNoAgent,
+		appNoAgentFlag,
+		false,
+		"should the application no authentication required (default false)",
+	)
+
 	cmd.Flags().Uint64Var(
 		&params.rawConfig.TelePool.MaxSlots,
 		maxSlotsFlag,
