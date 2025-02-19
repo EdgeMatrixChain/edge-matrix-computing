@@ -49,6 +49,12 @@ func (p *AppAgent) ValidateApiKey(apiKey string) (err error) {
 	return
 }
 
+func (p *AppAgent) GetProxyPath() (err error, proxyPath string) {
+	err = nil
+	proxyPath = "/proxy"
+	return
+}
+
 func (p *AppAgent) GetAppNode() (err error, nodeId string) {
 	err = nil
 	nodeId = ""
