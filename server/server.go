@@ -9,6 +9,7 @@ import (
 	appAgent "github.com/emc-protocol/edge-matrix-computing/agent"
 	cmdConfig "github.com/emc-protocol/edge-matrix-computing/command/server/config"
 	"github.com/emc-protocol/edge-matrix-computing/proxy"
+	"github.com/emc-protocol/edge-matrix-computing/versioning"
 	"github.com/emc-protocol/edge-matrix-core/core/application"
 	"github.com/emc-protocol/edge-matrix-core/core/application/proof"
 	"github.com/emc-protocol/edge-matrix-core/core/crypto"
@@ -309,7 +310,7 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, err
 		}
 
-		endpoint, err := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.config.AppPort, m.runningMode == RunningModeEdge)
+		endpoint, err := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.config.AppPort, versioning.Version, m.runningMode == RunningModeEdge)
 		if err != nil {
 			return nil, err
 		}
@@ -378,6 +379,8 @@ func NewServer(config *Config) (*Server, error) {
 
 				return
 			}
+
+			m.logger.Debug(proxy.TransparentForwardUrl, "body", string(body))
 
 			var transForward proxy.TransparentForward
 			if err := json.Unmarshal(body, &transForward); err != nil {
@@ -611,7 +614,8 @@ func (s *Server) setupJSONRPC() error {
 		Store:                    hub,
 		Addr:                     s.config.JSONRPC.JSONRPCAddr,
 		NetworkID:                uint64(s.config.GenesisConfig.NetworkId),
-		ChainName:                s.config.GenesisConfig.Name,
+		NetworkName:              s.config.GenesisConfig.Name,
+		Version:                  versioning.Version,
 		AccessControlAllowOrigin: s.config.JSONRPC.AccessControlAllowOrigin,
 	}
 
@@ -631,7 +635,8 @@ func (s *Server) setupTransparentProxy() error {
 		Store:                    s,
 		Addr:                     s.config.TransparentProxy.ProxyAddr,
 		NetworkID:                uint64(s.config.GenesisConfig.NetworkId),
-		ChainName:                s.config.GenesisConfig.Name,
+		NetworkName:              s.config.GenesisConfig.Name,
+		Version:                  versioning.Version,
 		AccessControlAllowOrigin: s.config.TransparentProxy.AccessControlAllowOrigin,
 	}
 

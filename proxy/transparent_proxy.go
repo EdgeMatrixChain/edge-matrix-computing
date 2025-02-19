@@ -19,7 +19,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emc-protocol/edge-matrix-core/core/versioning"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -65,7 +64,8 @@ type Config struct {
 	Store                    TransparentProxyStore
 	Addr                     *net.TCPAddr
 	NetworkID                uint64
-	ChainName                string
+	NetworkName              string
+	Version                  string
 	AccessControlAllowOrigin []string
 }
 
@@ -232,10 +232,8 @@ func (j *TransparentProxy) defaultMiddlewareFactory() func(http.Handler) http.Ha
 
 func (j *TransparentProxy) handle(w http.ResponseWriter, req *http.Request) {
 	switch req.Method {
-	case "POST":
-		j.handlePostRequest(w, req)
-	case "GET":
-		j.handleGetRequest(w)
+	case "POST", "GET":
+		j.handleRequest(w, req)
 	case "OPTIONS":
 		// nothing to return
 	default:
@@ -258,7 +256,13 @@ func ParseEdgePath(req *http.Request) (*EdgePath, error) {
 	path := req.URL.Path
 	parts := strings.Split(path, "/")
 
-	if len(parts) < 4 {
+	if len(parts) < 3 {
+		return &EdgePath{
+			NodeID:       "",
+			Port:         0,
+			InterfaceURL: "",
+		}, nil
+	} else if len(parts) < 4 {
 		return nil, fmt.Errorf("invalid path format: expected at least 4 parts, got %d", len(parts))
 	}
 
@@ -288,10 +292,11 @@ func ParseEdgePath(req *http.Request) (*EdgePath, error) {
 	}, nil
 }
 
-func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Request) {
+func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Request) {
 	pathInfo, ok := req.Context().Value("EdgePath").(*EdgePath)
 	if !ok {
 		http.Error(w, "Invalid edge path", http.StatusBadRequest)
+
 		return
 	}
 
@@ -299,20 +304,38 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 
 	// TODO verify NodeID by whitelist
 
+	if req.Method == "GET" && pathInfo.NodeID == "" {
+		data := &GetResponse{
+			Name:      j.config.NetworkName,
+			NetworkID: j.config.NetworkID,
+			Version:   j.config.Version,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		resp, err := json.Marshal(data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		if _, err = w.Write(resp); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		return
+	}
+
 	defer req.Body.Close()
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
-	// log request
-	j.logger.Debug("handle", "request", string(body))
 
 	clientHost := j.config.Store.GetRelayHost()
 	// query node in PeerStore
 	appPeer := j.config.Store.GetAppPeer(pathInfo.NodeID)
 	if appPeer == nil {
 		http.Error(w, "Failed to find node", http.StatusServiceUnavailable)
+
 		return
 	}
 
@@ -340,6 +363,10 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 	tr.RegisterProtocol("libp2p", p2phttp.NewTransport(clientHost, p2phttp.ProtocolOption(application.ProtoTagEcApp)))
 	client := &http.Client{Transport: tr}
 
+	//var payload string = ""
+	//if body != nil && len(body) > 0 {
+	//	payload = string(body)
+	//}
 	transparentForwardData := &TransparentForward{
 		EdgePath: *pathInfo,
 		Payload:  string(body),
@@ -363,7 +390,7 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 		}
 	}
 
-	// do request
+	// do forward
 	resp, err := client.Do(request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -380,16 +407,16 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 			line, err := reader.ReadBytes('\n')
 			if err != nil {
 				if err == io.EOF {
-					j.logger.Debug("handlePostRequest", "msg", "SSE stream closed by server")
+					j.logger.Debug("handleRequest", "msg", "SSE stream closed by server")
 					return
 				}
-				j.logger.Warn("handlePostRequest", "err", fmt.Sprintf("Error reading SSE stream: %v\n", err))
+				j.logger.Warn("handleRequest", "err", fmt.Sprintf("Error reading SSE stream: %v\n", err))
 				return
 			}
 
 			_, err = w.Write(line)
 			if err != nil {
-				j.logger.Warn("handlePostRequest", "err", fmt.Sprintf("Error writing to client: %v\n", err))
+				j.logger.Warn("handleRequest", "err", fmt.Sprintf("Error writing to client: %v\n", err))
 				return
 			}
 
@@ -401,24 +428,7 @@ func (j *TransparentProxy) handlePostRequest(w http.ResponseWriter, req *http.Re
 }
 
 type GetResponse struct {
-	Name    string `json:"name"`
-	ChainID uint64 `json:"chain_id"`
-	Version string `json:"version"`
-}
-
-func (j *TransparentProxy) handleGetRequest(writer io.Writer) {
-	data := &GetResponse{
-		Name:    j.config.ChainName,
-		ChainID: j.config.NetworkID,
-		Version: versioning.Version,
-	}
-
-	resp, err := json.Marshal(data)
-	if err != nil {
-		_, _ = writer.Write([]byte(err.Error()))
-	}
-
-	if _, err = writer.Write(resp); err != nil {
-		_, _ = writer.Write([]byte(err.Error()))
-	}
+	Name      string `json:"name"`
+	NetworkID uint64 `json:"networkID"`
+	Version   string `json:"version"`
 }
