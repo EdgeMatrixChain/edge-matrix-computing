@@ -359,14 +359,7 @@ func NewServer(config *Config) (*Server, error) {
 		endpoint.AddHandler(proxy.TransparentForwardUrl, func(w http.ResponseWriter, r *http.Request) {
 			m.logger.Debug(proxy.TransparentForwardUrl, "RemoteAddr", r.RemoteAddr, "Host", r.Host)
 
-			bearer := getBearer(r)
-			if bearer == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-
-				return
-			}
-
-			if !m.config.AppNoAuth && !m.ValidateBearer(bearer) {
+			if !m.config.AppNoAuth && !m.ValidateBearer(getBearer(r)) {
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 
 				return

@@ -174,7 +174,7 @@ func (j *TransparentProxy) BearerMiddlewareFactory() func(http.Handler) http.Han
 
 			// add Header: Forwarded(RFC 7239),
 			// e.g Forwarded: proto=http; host="example.com:8080"; for="client_ip"
-			r.Header.Add("Forwarded", fmt.Sprintf("proto=%s; host=%s; for=%s", "p2phttp", r.Host, r.RemoteAddr))
+			r.Header.Add("Forwarded", fmt.Sprintf("proto=%s; host=%s; for=%s", "http", r.Host, r.RemoteAddr))
 
 			pathInfo, err := ParseEdgePath(r)
 			if err != nil {
@@ -213,7 +213,7 @@ func (j *TransparentProxy) defaultMiddlewareFactory() func(http.Handler) http.Ha
 			}
 			// add Header: Forwarded(RFC 7239),
 			// e.g Forwarded: proto=http; host="example.com:8080"; for="client_ip"
-			r.Header.Add("Forwarded", fmt.Sprintf("proto=%s; host=%s; for=%s", "p2phttp", r.Host, r.RemoteAddr))
+			r.Header.Add("Forwarded", fmt.Sprintf("proto=%s; host=%s; for=%s", "http", r.Host, r.RemoteAddr))
 
 			pathInfo, err := ParseEdgePath(r)
 			if err != nil {
