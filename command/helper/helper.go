@@ -3,6 +3,7 @@ package helper
 import (
 	"errors"
 	"fmt"
+	minerOp "github.com/emc-protocol/edge-matrix-computing/miner/proto"
 	"net"
 	"net/url"
 	"time"
@@ -105,6 +106,19 @@ func GetSystemClientConnection(address string) (
 	}
 
 	return proto.NewSystemClient(conn), nil
+}
+
+// GetMinerClientConnection returns the Miner operator client connection
+func GetMinerClientConnection(address string) (
+	minerOp.MinerClient,
+	error,
+) {
+	conn, err := GetGRPCConnection(address)
+	if err != nil {
+		return nil, err
+	}
+
+	return minerOp.NewMinerClient(conn), nil
 }
 
 // GetGRPCConnection returns a grpc client connection

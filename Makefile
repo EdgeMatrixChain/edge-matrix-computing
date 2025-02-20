@@ -26,6 +26,7 @@ check-protoc:
 
 protoc:
 	protoc --go_out=. --go-grpc_out=. ./server/proto/*.proto
+	protoc --go_out=. --go-grpc_out=. ./miner/proto/*.proto
 
 get:
 	@echo "  >  \033[32mDownloading & Installing all the modules...\033[0m "

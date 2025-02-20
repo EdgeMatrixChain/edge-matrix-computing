@@ -8,6 +8,8 @@ import (
 	"fmt"
 	appAgent "github.com/emc-protocol/edge-matrix-computing/agent"
 	cmdConfig "github.com/emc-protocol/edge-matrix-computing/command/server/config"
+	"github.com/emc-protocol/edge-matrix-computing/miner"
+	minerProto "github.com/emc-protocol/edge-matrix-computing/miner/proto"
 	"github.com/emc-protocol/edge-matrix-computing/proxy"
 	"github.com/emc-protocol/edge-matrix-computing/versioning"
 	"github.com/emc-protocol/edge-matrix-core/core/application"
@@ -89,7 +91,6 @@ type Server struct {
 }
 
 func (s *Server) ValidateBearer(bearer string) bool {
-	//TODO implement ValidateBearer
 	err := s.appAgent.ValidateApiKey(bearer)
 	if err != nil {
 		return false
@@ -253,13 +254,6 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, err
 		}
 		m.edgeNetwork = edgeNetwork
-	}
-
-	// setup and start grpc server
-	{
-		if err := m.setupGRPC(); err != nil {
-			return nil, err
-		}
 	}
 
 	// start network
@@ -532,6 +526,21 @@ func NewServer(config *Config) (*Server, error) {
 
 			}
 		}
+
+		// init miner grpc service
+		minerAgent := miner.NewMinerHubAgent(m.logger, m.secretsManager)
+		_, err = m.initMinerService(minerAgent, endpointHost, m.secretsManager)
+		if err != nil {
+			return nil, err
+		}
+
+		// setup and start grpc server
+		{
+			if err := m.setupGRPC(); err != nil {
+				return nil, err
+			}
+		}
+
 	}
 
 	return m, nil
@@ -641,6 +650,17 @@ func (s *Server) setupTransparentProxy() error {
 	s.edgeProxyServer = srv
 
 	return nil
+}
+
+// initMinerService sets up the Miner grpc service
+func (s *Server) initMinerService(minerAgent *miner.MinerHubAgent, host host.Host, secretsManager secrets.SecretsManager) (*miner.MinerService, error) {
+	if s.grpcServer != nil {
+		minerService := miner.NewMinerService(s.logger, minerAgent, host, secretsManager)
+		minerProto.RegisterMinerServer(s.grpcServer, minerService)
+		return minerService, nil
+	}
+
+	return nil, errors.New("grpcServer is nil")
 }
 
 // setupGRPC sets up the grpc server and listens on tcp

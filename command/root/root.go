@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/emc-protocol/edge-matrix-computing/command/genesis"
 	"github.com/emc-protocol/edge-matrix-computing/command/helper"
+	"github.com/emc-protocol/edge-matrix-computing/command/miner"
 	"github.com/emc-protocol/edge-matrix-computing/command/peers"
 	"github.com/emc-protocol/edge-matrix-computing/command/secrets"
 	"github.com/emc-protocol/edge-matrix-computing/command/server"
@@ -38,6 +39,7 @@ func (rc *RootCommand) registerSubCommands() {
 		secrets.GetCommand(),
 		server.GetCommand(),
 		peers.GetCommand(),
+		miner.GetCommand(),
 	)
 }
 
