@@ -32,7 +32,6 @@ type initParams struct {
 	dataDir          string
 	configPath       string
 	generatesECDSA   bool
-	generatesBLS     bool
 	generatesNetwork bool
 
 	ensecureLocalStore bool
@@ -112,12 +111,6 @@ func (ip *initParams) encryptValidatorKey(secretsPass string) error {
 		}
 	}
 
-	if ip.generatesBLS {
-		if err = helper.EncryptBLSValidatorKey(ip.secretsManager, secretsPass); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -139,10 +132,6 @@ func (ip *initParams) getResult() (command.CommandResult, error) {
 	)
 
 	if res.Address, err = helper.LoadValidatorAddress(ip.secretsManager); err != nil {
-		return nil, err
-	}
-
-	if res.BLSPubkey, err = helper.LoadBLSPublicKey(ip.secretsManager); err != nil {
 		return nil, err
 	}
 

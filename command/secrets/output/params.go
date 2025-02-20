@@ -69,12 +69,6 @@ func (op *outputParams) initSecrets() error {
 		}
 	}
 
-	if op.outputBLS || outputAll {
-		if err := op.initBLSPublicKey(); err != nil || op.outputBLS {
-			return err
-		}
-	}
-
 	return op.initNodeID()
 }
 
@@ -155,17 +149,6 @@ func (op *outputParams) initValidatorAddress() error {
 	} else {
 		op.validatorAddress = validatorAddress.String()
 	}
-
-	return nil
-}
-
-func (op *outputParams) initBLSPublicKey() error {
-	blsPubkey, err := helper.LoadBLSPublicKey(op.secretsManager)
-	if err != nil {
-		return err
-	}
-
-	op.blsPubkey = blsPubkey
 
 	return nil
 }

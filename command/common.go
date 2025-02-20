@@ -2,8 +2,6 @@ package command
 
 import (
 	"errors"
-	"github.com/emc-protocol/edge-matrix-core/core/crypto"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
 )
 
 const (
@@ -21,33 +19,4 @@ var (
 
 	ErrValidatorNumberExceedsMax = errors.New("validator number exceeds max validator number")
 	ErrECDSAKeyNotFound          = errors.New("ECDSA key not found in given path")
-	ErrBLSKeyNotFound            = errors.New("BLS key not found in given path")
 )
-
-func getBLSPublicKeyBytesFromSecretManager(manager secrets.SecretsManager) ([]byte, error) {
-	if !manager.HasSecret(secrets.ValidatorBLSKey) {
-		return nil, ErrBLSKeyNotFound
-	}
-
-	keyBytes, err := manager.GetSecret(secrets.ValidatorBLSKey)
-	if err != nil {
-		return nil, err
-	}
-
-	secretKey, err := crypto.BytesToBLSSecretKey(keyBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	pubKey, err := secretKey.GetPublicKey()
-	if err != nil {
-		return nil, err
-	}
-
-	pubKeyBytes, err := pubKey.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
-
-	return pubKeyBytes, nil
-}
