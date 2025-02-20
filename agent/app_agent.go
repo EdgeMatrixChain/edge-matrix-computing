@@ -23,6 +23,10 @@ type GetDataResponse struct {
 	Data string `json:"data"`
 }
 
+type GetBoolResponse struct {
+	result bool `json:"result"`
+}
+
 func (p *AppAgent) BindAppNode(nodeId string) (err error) {
 	err = nil
 	apiUrl := p.appPath + "/hubapi/v1/bindNode"
@@ -36,22 +40,30 @@ func (p *AppAgent) BindAppNode(nodeId string) (err error) {
 	return
 }
 
-func (p *AppAgent) ValidateApiKey(apiKey string) (err error) {
+func (p *AppAgent) ValidateApiKey(apiKey string) (result bool, err error) {
 	err = nil
+	result = false
 	apiUrl := p.appPath + "/hubapi/v1/validateApiKey"
 	data := `{"apiKey":"%s"}`
 	postJson := fmt.Sprintf(data, apiKey)
-	_, err = p.httpClient.SendPostJsonRequest(apiUrl, []byte(postJson))
+	jsonBytes, err := p.httpClient.SendPostJsonRequest(apiUrl, []byte(postJson))
 	if err != nil {
 		err = errors.New("ValidateApiKey error:" + err.Error())
 		return
 	}
+	response := &GetBoolResponse{}
+	err = json.Unmarshal(jsonBytes, response)
+	if err != nil {
+		err = errors.New("GetBoolResponse json.Unmarshal error")
+		return
+	}
+	result = response.result
 	return
 }
 
 func (p *AppAgent) GetProxyPath() (err error, proxyPath string) {
 	err = nil
-	proxyPath = "/proxy"
+	proxyPath = "/hubapi/v1/proxy"
 	return
 }
 

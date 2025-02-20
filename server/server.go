@@ -91,12 +91,12 @@ type Server struct {
 }
 
 func (s *Server) ValidateBearer(bearer string) bool {
-	err := s.appAgent.ValidateApiKey(bearer)
+	result, err := s.appAgent.ValidateApiKey(bearer)
 	if err != nil {
 		return false
 	}
 
-	return true
+	return result
 }
 
 func (s *Server) GetAppPeer(id string) *application.AppPeer {
@@ -362,7 +362,7 @@ func NewServer(config *Config) (*Server, error) {
 			defer r.Body.Close()
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusServiceUnavailable)
 
 				return
 			}
@@ -371,7 +371,7 @@ func NewServer(config *Config) (*Server, error) {
 
 			var transForward proxy.TransparentForward
 			if err := json.Unmarshal(body, &transForward); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusServiceUnavailable)
 
 				return
 			}
@@ -383,17 +383,17 @@ func NewServer(config *Config) (*Server, error) {
 			} else {
 				err, proxyPath := m.appAgent.GetProxyPath()
 				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+					http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusServiceUnavailable)
 
 					return
 				}
-				targetURL = fmt.Sprintf("%s:%d/%s/%s", m.config.AppUrl, m.config.AppPort, proxyPath, transForward.EdgePath.InterfaceURL)
+				targetURL = fmt.Sprintf("%s:%d%s/%d/%s", m.config.AppUrl, m.config.AppPort, proxyPath, transForward.EdgePath.Port, transForward.EdgePath.InterfaceURL)
 			}
 			m.logger.Debug(proxy.TransparentForwardUrl, "targetURL", targetURL)
 
 			req, err := http.NewRequest(r.Method, targetURL, bytes.NewReader([]byte(transForward.Payload)))
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusServiceUnavailable)
 
 				return
 			}
@@ -407,7 +407,7 @@ func NewServer(config *Config) (*Server, error) {
 
 			resp, err := client.Do(req)
 			if err != nil {
-				http.Error(w, "Failed to connect to target server", http.StatusInternalServerError)
+				http.Error(w, "Failed to connect to target server", http.StatusServiceUnavailable)
 
 				return
 			}
