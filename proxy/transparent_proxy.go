@@ -178,7 +178,7 @@ func (j *TransparentProxy) BearerMiddlewareFactory() func(http.Handler) http.Han
 
 			pathInfo, err := ParseEdgePath(r)
 			if err != nil {
-				_, _ = w.Write([]byte(err.Error()))
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 			j.logger.Info("handle", "NodeID", pathInfo.NodeID, "Port", pathInfo.Port, "InterfaceURL", pathInfo.InterfaceURL)
@@ -217,7 +217,7 @@ func (j *TransparentProxy) defaultMiddlewareFactory() func(http.Handler) http.Ha
 
 			pathInfo, err := ParseEdgePath(r)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
@@ -237,7 +237,7 @@ func (j *TransparentProxy) handle(w http.ResponseWriter, req *http.Request) {
 	case "OPTIONS":
 		// nothing to return
 	default:
-		_, _ = w.Write([]byte("method " + req.Method + " not allowed"))
+		http.Error(w, fmt.Sprintf("method %s not allowed", req.Method), http.StatusNotImplemented)
 	}
 }
 
@@ -393,7 +393,7 @@ func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Reques
 	// do forward
 	resp, err := client.Do(request)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadGateway)
 	}
 	defer resp.Body.Close()
 

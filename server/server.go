@@ -393,7 +393,7 @@ func NewServer(config *Config) (*Server, error) {
 
 			req, err := http.NewRequest(r.Method, targetURL, bytes.NewReader([]byte(transForward.Payload)))
 			if err != nil {
-				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusServiceUnavailable)
+				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusInternalServerError)
 
 				return
 			}
@@ -407,7 +407,7 @@ func NewServer(config *Config) (*Server, error) {
 
 			resp, err := client.Do(req)
 			if err != nil {
-				http.Error(w, "Failed to connect to target server", http.StatusServiceUnavailable)
+				http.Error(w, "Failed to connect to target server", http.StatusBadGateway)
 
 				return
 			}
