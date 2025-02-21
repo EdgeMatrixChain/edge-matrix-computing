@@ -11,13 +11,13 @@ import (
 	"github.com/emc-protocol/edge-matrix-computing/miner"
 	minerProto "github.com/emc-protocol/edge-matrix-computing/miner/proto"
 	"github.com/emc-protocol/edge-matrix-computing/proxy"
+	"github.com/emc-protocol/edge-matrix-computing/telepool"
 	"github.com/emc-protocol/edge-matrix-computing/versioning"
 	"github.com/emc-protocol/edge-matrix-core/core/application"
 	"github.com/emc-protocol/edge-matrix-core/core/application/proof"
 	"github.com/emc-protocol/edge-matrix-core/core/crypto"
 	"github.com/emc-protocol/edge-matrix-core/core/jsonrpc/web3"
 	"github.com/emc-protocol/edge-matrix-core/core/relay"
-	"github.com/emc-protocol/edge-matrix-core/core/types"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
 	"io"
@@ -51,7 +51,7 @@ const (
 	EdgeIdentityProto = "/id/1.0"
 )
 
-// Server is the central manager of the blockchain client
+// Server is the central manager of the network client
 type Server struct {
 	logger hclog.Logger
 	config *Config
@@ -88,6 +88,9 @@ type Server struct {
 
 	// running mode
 	runningMode RunningModeType
+
+	// telegram pool
+	telepool *telepool.TelegramPool
 }
 
 func (s *Server) ValidateBearer(bearer string) bool {
@@ -309,7 +312,7 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, err
 		}
 
-		endpoint.SetSigner(proof.NewEIP155Signer(proof.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId)))
+		endpoint.SetSigner(proof.NewEIP155Signer(crypto.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId)))
 
 		// bind app agent
 		if !m.config.AppNoAgent {
@@ -333,21 +336,29 @@ func NewServer(config *Config) (*Server, error) {
 
 		endpoint.AddHandler("/idl", func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
-			err, appIdl := m.GetAppIdl()
-			if err != nil {
-				// Fetch idl json text through GET #{appUrl}/getAppIdl
+			if m.config.AppNoAgent {
 				idlData, err := os.ReadFile("idl.json")
 				if nil != err {
 					idlData = []byte("[]")
 				}
 				application.WriteSignedResponse(w, idlData, endpoint)
-			} else {
-				if len(appIdl) > 0 {
-					application.WriteSignedResponse(w, []byte(appIdl), endpoint)
-				} else {
-					application.WriteSignedResponse(w, []byte("[]"), endpoint)
-				}
+
+				return
 			}
+
+			err, appIdl := m.GetAppIdl()
+			if err != nil {
+				application.WriteSignedResponse(w, []byte("[]"), endpoint)
+
+				return
+			}
+
+			if len(appIdl) > 0 {
+				application.WriteSignedResponse(w, []byte(appIdl), endpoint)
+			} else {
+				application.WriteSignedResponse(w, []byte("[]"), endpoint)
+			}
+
 		})
 
 		endpoint.AddHandler(proxy.TransparentForwardUrl, func(w http.ResponseWriter, r *http.Request) {
@@ -495,6 +506,21 @@ func NewServer(config *Config) (*Server, error) {
 			}
 			m.appPeerSyncer = syncer
 
+			// Setup telegram pool
+			teleSigner := telepool.NewEIP155Signer(crypto.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId))
+			m.telepool, err = telepool.NewTelegramPool(
+				logger,
+				&telepool.Config{
+					MaxSlots:           m.config.MaxSlots,
+					MaxAccountEnqueued: m.config.MaxAccountEnqueued,
+				},
+				m,
+				teleSigner,
+			)
+			if err != nil {
+				return nil, err
+			}
+
 			// setup and start jsonrpc server
 			if err := m.setupJSONRPC(); err != nil {
 				return nil, err
@@ -590,25 +616,10 @@ func (s *Server) setupSecretsManager() error {
 	return nil
 }
 
-type jsonRPCHub struct {
-	//*telepool.TelegramPool
-	*network.Server
-	application.SyncAppPeerClient
-}
-
-func (j jsonRPCHub) AddTele(tx *types.Telegram) (string, error) {
-	//TODO implement AddTele
-	panic("implement me")
-}
-
-func (j *jsonRPCHub) GetPeers() int {
-	return len(j.Server.Peers())
-}
-
 // setupJSONRCP sets up the JSONRPC server, using the set configuration
 func (s *Server) setupJSONRPC() error {
 	hub := &jsonRPCHub{
-		//TelegramPool:       s.telepool,
+		TelegramPool:      s.telepool,
 		Server:            s.edgeNetwork,
 		SyncAppPeerClient: s.syncAppPeerClient,
 	}
@@ -733,4 +744,14 @@ func (s *Server) startPrometheusServer(listenAddr *net.TCPAddr) *http.Server {
 	}()
 
 	return srv
+}
+
+type jsonRPCHub struct {
+	*telepool.TelegramPool
+	*network.Server
+	application.SyncAppPeerClient
+}
+
+func (j *jsonRPCHub) GetPeers() int {
+	return len(j.Server.Peers())
 }
