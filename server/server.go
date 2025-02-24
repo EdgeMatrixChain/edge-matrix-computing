@@ -211,9 +211,9 @@ func getBearer(r *http.Request) string {
 
 // NewServer creates a new Minimal server, using the passed in configuration
 func NewServer(config *Config) (*Server, error) {
-	logger, err := newLoggerFromConfig(config)
-	if err != nil {
-		return nil, fmt.Errorf("could not setup new logger instance, %w", err)
+	logger, logErr := newLoggerFromConfig(config)
+	if logErr != nil {
+		return nil, fmt.Errorf("could not setup new logger instance, %w", logErr)
 	}
 
 	m := &Server{
@@ -238,8 +238,8 @@ func NewServer(config *Config) (*Server, error) {
 	}
 
 	// Set up datadog profiler
-	if ddErr := m.enableDataDogProfiler(); err != nil {
-		m.logger.Error("DataDog profiler setup failed", "err", ddErr.Error())
+	if err := m.enableDataDogProfiler(); err != nil {
+		m.logger.Error("DataDog profiler setup failed", "err", err.Error())
 	}
 
 	// Set up the secrets manager
@@ -257,15 +257,10 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, err
 		}
 		m.edgeNetwork = edgeNetwork
-	}
 
-	// start network
-	{
-		if m.runningMode == RunningModeFull {
-			// start edge network
-			if err := m.edgeNetwork.Start("Edge", m.config.GenesisConfig.Bootnodes); err != nil {
-				return nil, err
-			}
+		// start edge network
+		if err = m.edgeNetwork.Start("Edge", m.config.GenesisConfig.Bootnodes); err != nil {
+			return nil, err
 		}
 	}
 
@@ -283,9 +278,9 @@ func NewServer(config *Config) (*Server, error) {
 
 		if m.runningMode == RunningModeEdge {
 			// start edge network relay reserv
-			relayClient, err := relay.NewRelayClient(logger, relayNetConfig, m.config.RelayOn, m.config.GenesisConfig.Relaynodes)
-			if err != nil {
-				return nil, err
+			relayClient, rlyErr := relay.NewRelayClient(logger, relayNetConfig, m.config.RelayOn, m.config.GenesisConfig.Relaynodes)
+			if rlyErr != nil {
+				return nil, rlyErr
 			}
 			endpointHost = relayClient.GetHost()
 
@@ -297,33 +292,32 @@ func NewServer(config *Config) (*Server, error) {
 			}
 		}
 
-		keyBytes, err := m.secretsManager.GetSecret(secrets.ValidatorKey)
-		if err != nil {
-			return nil, err
+		keyBytes, keyBytesErr := m.secretsManager.GetSecret(secrets.ValidatorKey)
+		if keyBytesErr != nil {
+			return nil, keyBytesErr
 		}
 
-		key, err := crypto.BytesToECDSAPrivateKey(keyBytes)
-		if err != nil {
-			return nil, err
+		key, keyErr := crypto.BytesToECDSAPrivateKey(keyBytes)
+		if keyErr != nil {
+			return nil, keyErr
 		}
 
-		endpoint, err := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.config.AppPort, versioning.Version, m.runningMode == RunningModeEdge)
-		if err != nil {
-			return nil, err
+		endpoint, endpointErr := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.config.AppPort, versioning.Version, m.runningMode == RunningModeEdge)
+		if endpointErr != nil {
+			return nil, endpointErr
 		}
 
 		endpoint.SetSigner(proof.NewEIP155Signer(crypto.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId)))
 
 		// bind app agent
 		if !m.config.AppNoAgent {
-			err = m.doAppNodeBind(endpointHost.ID().String())
-			if err != nil {
+			if err := m.doAppNodeBind(endpointHost.ID().String()); err != nil {
 				m.logger.Error("doAppNodeBind", "err", err.Error())
 			}
 
-			err, appOrigin := m.getAppOrigin()
-			if err != nil {
-				m.logger.Error("getAppOrigin", "err", err.Error())
+			appOriginErr, appOrigin := m.getAppOrigin()
+			if appOriginErr != nil {
+				m.logger.Error("getAppOrigin", "err", appOriginErr.Error())
 			}
 			endpoint.SetAppOrigin(appOrigin)
 		}
@@ -346,8 +340,8 @@ func NewServer(config *Config) (*Server, error) {
 				return
 			}
 
-			err, appIdl := m.GetAppIdl()
-			if err != nil {
+			appIdlErr, appIdl := m.GetAppIdl()
+			if appIdlErr != nil {
 				application.WriteSignedResponse(w, []byte("[]"), endpoint)
 
 				return
@@ -371,9 +365,9 @@ func NewServer(config *Config) (*Server, error) {
 			}
 
 			defer r.Body.Close()
-			body, err := io.ReadAll(r.Body)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusServiceUnavailable)
+			body, bodyErr := io.ReadAll(r.Body)
+			if bodyErr != nil {
+				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, bodyErr.Error()), http.StatusServiceUnavailable)
 
 				return
 			}
@@ -402,9 +396,9 @@ func NewServer(config *Config) (*Server, error) {
 			}
 			m.logger.Debug(proxy.TransparentForwardUrl, "targetURL", targetURL)
 
-			req, err := http.NewRequest(r.Method, targetURL, bytes.NewReader([]byte(transForward.Payload)))
-			if err != nil {
-				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusInternalServerError)
+			req, reqErr := http.NewRequest(r.Method, targetURL, bytes.NewReader([]byte(transForward.Payload)))
+			if reqErr != nil {
+				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, reqErr.Error()), http.StatusInternalServerError)
 
 				return
 			}
@@ -416,35 +410,37 @@ func NewServer(config *Config) (*Server, error) {
 				}
 			}
 
-			resp, err := client.Do(req)
-			if err != nil {
+			resp, respErr := client.Do(req)
+			if respErr != nil {
 				http.Error(w, "Failed to connect to target server", http.StatusBadGateway)
 
 				return
 			}
 			defer resp.Body.Close()
 
-			for key, value := range resp.Header {
-				w.Header().Set(key, value[0])
+			for key, values := range resp.Header {
+				for _, value := range values {
+					w.Header().Add(key, value)
+				}
 			}
 			w.WriteHeader(resp.StatusCode)
 			if resp.Header.Get("Content-Type") == "text/event-stream" {
 				reader := bufio.NewReader(resp.Body)
 				for {
-					line, err := reader.ReadBytes('\n')
-					if err != nil {
-						if err == io.EOF {
+					line, lineErr := reader.ReadBytes('\n')
+					if lineErr != nil {
+						if lineErr == io.EOF {
 
 							return
 						}
-						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error reading SSE stream: %v\n", err))
+						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error reading SSE stream: %v\n", lineErr))
 
 						return
 					}
 
-					_, err = w.Write(line)
-					if err != nil {
-						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error writing to client: %v\n", err))
+					_, writeErr := w.Write(line)
+					if writeErr != nil {
+						m.logger.Warn(proxy.TransparentForwardUrl, "err", fmt.Sprintf("Error writing to client: %v\n", writeErr))
 
 						return
 					}
@@ -458,8 +454,7 @@ func NewServer(config *Config) (*Server, error) {
 
 		if m.runningMode == RunningModeEdge {
 			// keep edge peer alive
-			err := m.relayClient.StartAlive(endpoint.SubscribeEvents())
-			if err != nil {
+			if err := m.relayClient.StartAlive(endpoint.SubscribeEvents()); err != nil {
 				return nil, err
 			}
 
@@ -470,14 +465,13 @@ func NewServer(config *Config) (*Server, error) {
 					for {
 						<-ticker.C
 
-						err = m.doAppNodeBind(endpointHost.ID().String())
-						if err != nil {
+						if err := m.doAppNodeBind(endpointHost.ID().String()); err != nil {
 							m.logger.Error("doAppNodeBind", "err", err.Error())
 						}
 
-						err, appOrigin := m.getAppOrigin()
-						if err != nil {
-							m.logger.Error("getAppOrigin", "err", err.Error())
+						appOriginErr, appOrigin := m.getAppOrigin()
+						if appOriginErr != nil {
+							m.logger.Error("getAppOrigin", "err", appOriginErr.Error())
 						}
 						endpoint.SetAppOrigin(appOrigin)
 
@@ -500,26 +494,21 @@ func NewServer(config *Config) (*Server, error) {
 				m.edgeNetwork.GetHost(),
 				endpoint)
 			// start app status syncer
-			err = syncer.Start(true)
-			if err != nil {
+			if err := syncer.Start(true); err != nil {
 				return nil, err
 			}
 			m.appPeerSyncer = syncer
 
 			// Setup telegram pool
-			teleSigner := telepool.NewEIP155Signer(crypto.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId))
-			m.telepool, err = telepool.NewTelegramPool(
+			m.telepool = telepool.NewTelegramPool(
 				logger,
 				&telepool.Config{
 					MaxSlots:           m.config.MaxSlots,
 					MaxAccountEnqueued: m.config.MaxAccountEnqueued,
 				},
 				m,
-				teleSigner,
+				telepool.NewEIP155Signer(crypto.AllForksEnabled.At(0), uint64(m.config.GenesisConfig.NetworkId)),
 			)
-			if err != nil {
-				return nil, err
-			}
 
 			// setup and start jsonrpc server
 			if err := m.setupJSONRPC(); err != nil {
@@ -533,18 +522,17 @@ func NewServer(config *Config) (*Server, error) {
 
 			// start relay server
 			if config.RelayAddr.Port > 0 {
-				relayListenAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", config.RelayAddr.IP.String(), config.RelayAddr.Port))
-				if err != nil {
-					return nil, err
+				relayListenAddr, relayListenAddrErr := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", config.RelayAddr.IP.String(), config.RelayAddr.Port))
+				if relayListenAddrErr != nil {
+					return nil, relayListenAddrErr
 				}
-				relayServer, err := relay.NewRelayServer(logger, m.secretsManager, relayListenAddr, config.TransparentProxy.ProxyAddr, syncAppclient, config.RelayDiscovery, m.config.GenesisConfig.Bootnodes)
-				if err != nil {
-					return nil, err
+				relayServer, relayServerErr := relay.NewRelayServer(logger, m.secretsManager, relayListenAddr, config.TransparentProxy.ProxyAddr, syncAppclient, config.RelayDiscovery, m.config.GenesisConfig.Bootnodes)
+				if relayServerErr != nil {
+					return nil, relayServerErr
 				}
 				logger.Info("LibP2P Relay server running", "addr", relayListenAddr.String()+"/p2p/"+relayServer.GetHost().ID().String())
 
-				err = relayServer.SetupAliveService(syncAppclient)
-				if err != nil {
+				if err := relayServer.SetupAliveService(syncAppclient); err != nil {
 					return nil, fmt.Errorf("unable to setup alive service, %w", err)
 				}
 
@@ -555,8 +543,7 @@ func NewServer(config *Config) (*Server, error) {
 
 		// init miner grpc service
 		minerAgent := miner.NewMinerHubAgent(m.logger, m.secretsManager)
-		_, err = m.initMinerService(minerAgent, endpointHost, m.secretsManager)
-		if err != nil {
+		if _, err := m.initMinerService(minerAgent, endpointHost, m.secretsManager); err != nil {
 			return nil, err
 		}
 
