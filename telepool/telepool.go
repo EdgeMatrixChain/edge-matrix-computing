@@ -157,7 +157,7 @@ func NewTelegramPool(
 	config *Config,
 	store TelepoolStore,
 	signer signer,
-) (*TelegramPool, error) {
+) *TelegramPool {
 	pool := &TelegramPool{
 		logger: logger.Named("telepool"),
 		gauge:  slotGauge{height: 0, max: config.MaxSlots},
@@ -170,7 +170,7 @@ func NewTelegramPool(
 		shutdownCh:   make(chan struct{}),
 	}
 
-	return pool, nil
+	return pool
 }
 
 // AddTele adds a new telegram to the pool (sent from json-RPC/gRPC endpoints)
