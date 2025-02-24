@@ -462,6 +462,7 @@ func NewServer(config *Config) (*Server, error) {
 			if !m.config.AppNoAgent {
 				go func() {
 					ticker := time.NewTicker(DefaultAppBindSyncDuration)
+					defer ticker.Stop()
 					for {
 						<-ticker.C
 
@@ -477,7 +478,6 @@ func NewServer(config *Config) (*Server, error) {
 
 						m.logger.Info("binding", "NodeID", endpointHost.ID().String(), "AppOrigin", appOrigin)
 					}
-					ticker.Stop()
 				}()
 			}
 		}
