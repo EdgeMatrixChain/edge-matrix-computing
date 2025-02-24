@@ -17,7 +17,6 @@ const (
 	dataDirFlag   = "data-dir"
 	configFlag    = "config"
 	validatorFlag = "validator"
-	blsFlag       = "bls"
 	nodeIDFlag    = "node-id"
 )
 
@@ -37,13 +36,11 @@ type outputParams struct {
 
 	outputNodeID    bool
 	outputValidator bool
-	outputBLS       bool
 
 	secretsManager secrets.SecretsManager
 	secretsConfig  *secrets.SecretsManagerConfig
 
 	validatorAddress string
-	blsPubkey        string
 
 	nodeID string
 }
@@ -61,7 +58,7 @@ func (op *outputParams) initSecrets() error {
 		return err
 	}
 
-	outputAll := !(op.outputBLS || op.outputValidator || op.outputNodeID)
+	outputAll := !(op.outputValidator || op.outputNodeID)
 
 	if op.outputValidator || outputAll {
 		if err := op.initValidatorAddress(); err != nil || op.outputValidator {
@@ -177,15 +174,8 @@ func (op *outputParams) getResult() command.CommandResult {
 		}
 	}
 
-	if op.outputBLS {
-		return &SecretsOutputBLSResult{
-			BLSPubkey: op.blsPubkey,
-		}
-	}
-
 	return &SecretsOutputAllResult{
-		BLSPubkey: op.blsPubkey,
-		NodeID:    op.nodeID,
-		Address:   op.validatorAddress,
+		NodeID:  op.nodeID,
+		Address: op.validatorAddress,
 	}
 }

@@ -35,14 +35,6 @@ func setFlags(cmd *cobra.Command) {
 	)
 
 	cmd.Flags().BoolVar(
-		&params.outputBLS,
-		blsFlag,
-		false,
-		"output only the BLS public key "+
-			"from the provided secrets manager",
-	)
-
-	cmd.Flags().BoolVar(
 		&params.outputNodeID,
 		nodeIDFlag,
 		false,
@@ -59,7 +51,7 @@ func setFlags(cmd *cobra.Command) {
 	)
 
 	cmd.MarkFlagsMutuallyExclusive(dataDirFlag, configFlag)
-	cmd.MarkFlagsMutuallyExclusive(nodeIDFlag, validatorFlag, blsFlag)
+	cmd.MarkFlagsMutuallyExclusive(nodeIDFlag, validatorFlag)
 }
 
 func runPreRun(_ *cobra.Command, _ []string) error {
