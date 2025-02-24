@@ -223,13 +223,6 @@ func NewServer(config *Config) (*Server, error) {
 		appAgent:   appAgent.NewAppAgent(fmt.Sprintf("%s:%d", config.AppUrl, config.AppPort)),
 	}
 
-	if m.config.RunningMode == cmdConfig.DefaultRunningMode {
-		m.runningMode = RunningModeFull
-	} else {
-		m.runningMode = RunningModeEdge
-	}
-	m.logger.Info("Node running", "mode", m.runningMode)
-
 	m.logger.Info("Data dir", "path", config.DataDir)
 
 	// Generate all the paths in the dataDir
@@ -247,6 +240,15 @@ func NewServer(config *Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to set up the secrets manager: %w", err)
 	}
 
+	var endpointHost host.Host
+
+	if m.config.RunningMode == cmdConfig.DefaultRunningMode {
+		m.runningMode = RunningModeFull
+	} else {
+		m.runningMode = RunningModeEdge
+	}
+	m.logger.Info("Node running", "mode", m.runningMode)
+
 	if m.runningMode == RunningModeFull {
 		// setup edge libp2p network
 		edgeNetConfig := config.EdgeNetwork
@@ -257,41 +259,34 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, err
 		}
 		m.edgeNetwork = edgeNetwork
+		endpointHost = m.edgeNetwork.GetHost()
 
 		// start edge network
 		if err = m.edgeNetwork.Start("Edge", m.config.GenesisConfig.Bootnodes); err != nil {
 			return nil, err
 		}
-	}
-
-	{
-		// setup edge application
-		var endpointHost host.Host
-
-		if m.edgeNetwork != nil {
-			endpointHost = m.edgeNetwork.GetHost()
-		}
-
+	} else {
 		relayNetConfig := config.EdgeNetwork
 		relayNetConfig.DataDir = filepath.Join(m.config.DataDir, "libp2p")
 		relayNetConfig.SecretsManager = m.secretsManager
 
-		if m.runningMode == RunningModeEdge {
-			// start edge network relay reserv
-			relayClient, rlyErr := relay.NewRelayClient(logger, relayNetConfig, m.config.RelayOn, m.config.GenesisConfig.Relaynodes)
-			if rlyErr != nil {
-				return nil, rlyErr
-			}
-			endpointHost = relayClient.GetHost()
+		// start edge network relay reserv
+		relayClient, rlyErr := relay.NewRelayClient(logger, relayNetConfig, m.config.RelayOn, m.config.GenesisConfig.Relaynodes)
+		if rlyErr != nil {
+			return nil, rlyErr
+		}
+		endpointHost = relayClient.GetHost()
 
-			m.relayClient = relayClient
-			if m.config.RelayOn {
-				if err := relayClient.StartRelayReserv(); err != nil {
-					return nil, err
-				}
+		m.relayClient = relayClient
+		if m.config.RelayOn {
+			if err := relayClient.StartRelayReserv(); err != nil {
+				return nil, err
 			}
 		}
+	}
 
+	{
+		// setup edge application
 		keyBytes, keyBytesErr := m.secretsManager.GetSecret(secrets.ValidatorKey)
 		if keyBytesErr != nil {
 			return nil, keyBytesErr
@@ -302,7 +297,7 @@ func NewServer(config *Config) (*Server, error) {
 			return nil, keyErr
 		}
 
-		endpoint, endpointErr := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.config.AppPort, versioning.Version, m.runningMode == RunningModeEdge)
+		endpoint, endpointErr := application.NewApplicationEndpoint(m.logger, key, endpointHost, m.config.AppName, m.config.AppUrl, m.config.AppPort, versioning.Version)
 		if endpointErr != nil {
 			return nil, endpointErr
 		}
@@ -452,36 +447,6 @@ func NewServer(config *Config) (*Server, error) {
 			}
 		})
 
-		if m.runningMode == RunningModeEdge {
-			// keep edge peer alive
-			if err := m.relayClient.StartAlive(endpoint.SubscribeEvents()); err != nil {
-				return nil, err
-			}
-
-			// do agent binding
-			if !m.config.AppNoAgent {
-				go func() {
-					ticker := time.NewTicker(DefaultAppBindSyncDuration)
-					defer ticker.Stop()
-					for {
-						<-ticker.C
-
-						if err := m.doAppNodeBind(endpointHost.ID().String()); err != nil {
-							m.logger.Error("doAppNodeBind", "err", err.Error())
-						}
-
-						appOriginErr, appOrigin := m.getAppOrigin()
-						if appOriginErr != nil {
-							m.logger.Error("getAppOrigin", "err", appOriginErr.Error())
-						}
-						endpoint.SetAppOrigin(appOrigin)
-
-						m.logger.Info("binding", "NodeID", endpointHost.ID().String(), "AppOrigin", appOrigin)
-					}
-				}()
-			}
-		}
-
 		if m.runningMode == RunningModeFull {
 			// setup app status syncer
 			syncAppclient := application.NewSyncAppPeerClient(m.logger, m.edgeNetwork, m.edgeNetwork.GetHost(), endpoint)
@@ -538,6 +503,34 @@ func NewServer(config *Config) (*Server, error) {
 
 				m.relayServer = relayServer
 
+			}
+		} else {
+			// keep edge peer alive
+			if err := m.relayClient.StartAlive(endpoint.SubscribeEvents()); err != nil {
+				return nil, err
+			}
+
+			// do agent binding
+			if !m.config.AppNoAgent {
+				go func() {
+					ticker := time.NewTicker(DefaultAppBindSyncDuration)
+					defer ticker.Stop()
+					for {
+						<-ticker.C
+
+						if err := m.doAppNodeBind(endpointHost.ID().String()); err != nil {
+							m.logger.Error("doAppNodeBind", "err", err.Error())
+						}
+
+						appOriginErr, appOrigin := m.getAppOrigin()
+						if appOriginErr != nil {
+							m.logger.Error("getAppOrigin", "err", appOriginErr.Error())
+						}
+						endpoint.SetAppOrigin(appOrigin)
+
+						m.logger.Info("binding", "NodeID", endpointHost.ID().String(), "AppOrigin", appOrigin)
+					}
+				}()
 			}
 		}
 
@@ -698,6 +691,15 @@ func (s *Server) Close() {
 		if err := s.edgeNetwork.Close(); err != nil {
 			s.logger.Error("failed to close networking", "err", err.Error())
 		}
+	}
+	// Close the syncAppPeerClient
+	if s.syncAppPeerClient != nil {
+		s.syncAppPeerClient.Close()
+	}
+
+	// close the relayClient
+	if s.relayClient != nil {
+		s.relayClient.Close()
 	}
 
 	// Close DataDog profiler
