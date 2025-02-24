@@ -12,8 +12,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
-	"github.com/umbracle/fastrlp"
-	"time"
 )
 
 // indicates origin of a transaction
@@ -26,23 +24,10 @@ const (
 
 // errors
 var (
-	ErrIntrinsicGas            = errors.New("intrinsic gas too low")
-	ErrBlockLimitExceeded      = errors.New("exceeds block gas limit")
-	ErrNegativeValue           = errors.New("negative value")
-	ErrExtractSignature        = errors.New("cannot extract signature")
-	ErrInvalidSender           = errors.New("invalid sender")
-	ErrInvalidProvider         = errors.New("invalid provider")
-	ErrTxPoolOverflow          = errors.New("txpool is full")
-	ErrUnderpriced             = errors.New("transaction underpriced")
-	ErrNonceTooLow             = errors.New("nonce too low")
-	ErrNonceTooHigh            = errors.New("nonce too high")
-	ErrInsufficientFunds       = errors.New("insufficient funds for gas * price + value")
-	ErrInvalidAccountState     = errors.New("invalid account state")
-	ErrAlreadyKnown            = errors.New("already known")
-	ErrOversizedData           = errors.New("oversized data")
-	ErrMaxEnqueuedLimitReached = errors.New("maximum number of enqueued transactions reached")
-	ErrRejectFutureTx          = errors.New("rejected future tx due to low slots")
-	ErrSmartContractRestricted = errors.New("smart contract deployment restricted")
+	ErrExtractSignature = errors.New("cannot extract signature")
+	ErrInvalidSender    = errors.New("invalid sender")
+	ErrInvalidProvider  = errors.New("invalid provider")
+	ErrOversizedData    = errors.New("oversized data")
 )
 
 // EdgeCallPrecompile is and address of edge call precompile
@@ -64,19 +49,9 @@ const (
 	txMaxSize   = 128 * 1024 // 128
 	topicNameV1 = "tele/0.3"
 
-	// maximum allowed number of times an account
-	// was excluded from block building (ibft.writeTransactions)
-	maxAccountDemotions uint64 = 10
-
-	// maximum allowed number of consecutive blocks that don't have the account's transaction
-	maxAccountSkips = uint64(10)
-	pruningCooldown = 5000 * time.Millisecond
-
 	// txPoolMetrics is a prefix used for txpool-related metrics
 	txPoolMetrics = "telepool"
 )
-
-var marshalArenaPool fastrlp.ArenaPool
 
 type enqueueRequest struct {
 	tele *types.Telegram
@@ -183,18 +158,18 @@ func (p *TelegramPool) AddTele(tele *types.Telegram) (string, error) {
 		if err := json.Unmarshal(input, &call); err != nil {
 			return "", err
 		}
-		host := p.store.GetRelayHost()
+		relayHost := p.store.GetRelayHost()
 
 		relayAddr, addr := p.getAppPeerAddr(call.PeerId)
 		p.logger.Debug("edge call", "PeerId", call.PeerId, "Endpoint", call.Endpoint, "addr", addr, "Relay", relayAddr)
 		if relayAddr != "" || addr != "" {
-			err := p.addAddrToHost(call.PeerId, host, addr, relayAddr)
+			err := p.addAddrToHost(call.PeerId, relayHost, addr, relayAddr)
 			if err != nil {
 				return "", err
 			}
 		}
 
-		respBuf, callErr := application.Call(host, application.ProtoTagEcApp, call)
+		respBuf, callErr := application.Call(relayHost, application.ProtoTagEcApp, call)
 		if callErr != nil {
 			return "", callErr
 		}
