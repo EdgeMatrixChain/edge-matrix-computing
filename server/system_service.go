@@ -47,12 +47,12 @@ func (s *systemService) PeersStatus(ctx context.Context, req *proto.PeersStatusR
 		return nil, err
 	}
 
-	peer, err := s.getPeer(peerID)
+	protoPeer, err := s.getPeer(peerID)
 	if err != nil {
 		return nil, err
 	}
 
-	return peer, nil
+	return protoPeer, nil
 }
 
 // getPeer returns a specific proto.Peer using the peer ID
@@ -73,13 +73,13 @@ func (s *systemService) getPeer(id peer.ID) (*proto.Peer, error) {
 		protoList = append(protoList, string(prot))
 	}
 
-	peer := &proto.Peer{
+	protoPeer := &proto.Peer{
 		Id:        id.String(),
 		Protocols: protoList,
 		Addrs:     addrs,
 	}
 
-	return peer, nil
+	return protoPeer, nil
 }
 
 // PeersList implements the 'peers list' operator service
@@ -170,12 +170,12 @@ func (s *systemService) RelayStatus(
 			addrs = append(addrs, addr.String())
 		}
 		resv := relayPeers[0].Reservation
-		peer := &proto.Peer{
+		protoPeer := &proto.Peer{
 			Id:          relayPeers[0].Info.Info.ID.String(),
 			Addrs:       addrs,
 			Reservation: fmt.Sprintf("LimitData:%d, LimitDuration:%v, Expiration:%v, Addrs:%v", resv.LimitData, resv.LimitDuration, resv.Expiration, resv.Addrs),
 		}
-		return peer, nil
+		return protoPeer, nil
 	}
 
 	return &proto.Peer{
