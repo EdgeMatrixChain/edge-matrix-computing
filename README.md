@@ -17,6 +17,7 @@ This example shows how to create a distributed computing network with EdgeMatrix
 From the `edge-matrix-computing` directory run the following:
 
 ```
+make import-core
 make build
 make build-example
 cd build
@@ -72,7 +73,7 @@ Step 3: Start relay nodes
 
 Step 4: Generate an example_edge. json file
 ```sh
- ./edge-matrix-computing genesis  --dir example_edge.json --name MyNetwork --network-id 1000 --relaynode=/ip4/127.0.0.1/tcp/50004/p2p/16Uiu2HAmKdcZsHngqMFzXjrhzWHBPJTDFjj9sdeEYVHqA1nm4hQr --relaynode=/ip4/127.0.0.1/tcp/51004/p2p/16Uiu2HAm7U1QtzHESv44Pvg6eGkA6cr9pewVauiYRPkfDqoD2SQd
+ ./edge-matrix-computing genesis --dir example_edge.json --name MyNetwork --network-id 1000 --relaynode=/ip4/127.0.0.1/tcp/50004/p2p/16Uiu2HAmKdcZsHngqMFzXjrhzWHBPJTDFjj9sdeEYVHqA1nm4hQr --relaynode=/ip4/127.0.0.1/tcp/51004/p2p/16Uiu2HAm7U1QtzHESv44Pvg6eGkA6cr9pewVauiYRPkfDqoD2SQd
 ```
 
 Step 5: Start the edge node， After 25 seconds of startup, the information of edge nodes will be synchronized to the P2P network
