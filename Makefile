@@ -32,6 +32,13 @@ get:
 	@echo "  >  \033[32mDownloading & Installing all the modules...\033[0m "
 	go mod tidy && go mod download
 
+build-example: check-go check-git
+	@echo "  >  \033[32mBuilding binary...\033[0m "
+	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
+	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))
+	$(eval VERSION = $(shell git tag --points-at ${COMMIT_HASH}))
+	go build -o build/webapp example/main.go
+
 build: check-go check-git
 	@echo "  >  \033[32mBuilding binary...\033[0m "
 	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
