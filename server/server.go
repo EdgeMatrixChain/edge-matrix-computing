@@ -491,7 +491,7 @@ func NewServer(config *Config) (*Server, error) {
 				if relayListenAddrErr != nil {
 					return nil, relayListenAddrErr
 				}
-				relayServer, relayServerErr := relay.NewRelayServer(logger, m.secretsManager, relayListenAddr, config.TransparentProxy.ProxyAddr, syncAppclient, config.RelayDiscovery, m.config.GenesisConfig.Bootnodes)
+				relayServer, relayServerErr := relay.NewRelayServer(logger, m.secretsManager, relayListenAddr, config.TransparentProxy.ProxyAddr, syncAppclient, config.RelayDiscovery, m.config.GenesisConfig.Relaynodes)
 				if relayServerErr != nil {
 					return nil, relayServerErr
 				}
