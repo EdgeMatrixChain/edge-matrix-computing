@@ -1,8 +1,7 @@
-package relaylist
+package status
 
 import (
 	"context"
-
 	"github.com/emc-protocol/edge-matrix-computing/command"
 	"github.com/emc-protocol/edge-matrix-computing/command/helper"
 	"github.com/emc-protocol/edge-matrix-computing/server/proto"
@@ -11,36 +10,38 @@ import (
 )
 
 func GetCommand() *cobra.Command {
-	peersListCmd := &cobra.Command{
-		Use:   "relaylist",
-		Short: "Returns the list of relay nodes, including the current connected node",
+	peersStatusCmd := &cobra.Command{
+		Use:   "status",
+		Short: "Returns the connection status of the relay",
 		Run:   runCommand,
 	}
 
-	return peersListCmd
+	return peersStatusCmd
 }
 
 func runCommand(cmd *cobra.Command, _ []string) {
 	outputter := command.InitializeOutputter(cmd)
 	defer outputter.WriteOutput()
 
-	peersList, err := getPeersRelayList(helper.GetGRPCAddress(cmd))
+	peerStatus, err := getRelayStatus(helper.GetGRPCAddress(cmd))
 	if err != nil {
 		outputter.SetError(err)
 
 		return
 	}
 
-	outputter.SetCommandResult(
-		newPeersListResult(peersList.Peers),
-	)
+	outputter.SetCommandResult(&PeersStatusResult{
+		ID:          peerStatus.Id,
+		Addresses:   peerStatus.Addrs,
+		Reservation: peerStatus.Reservation,
+	})
 }
 
-func getPeersRelayList(grpcAddress string) (*proto.PeersListResponse, error) {
+func getRelayStatus(grpcAddress string) (*proto.Peer, error) {
 	client, err := helper.GetSystemClientConnection(grpcAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.PeersRelayList(context.Background(), &empty.Empty{})
+	return client.RelayStatus(context.Background(), &empty.Empty{})
 }

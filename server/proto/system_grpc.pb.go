@@ -20,15 +20,16 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	System_GetStatus_FullMethodName      = "/v1.System/GetStatus"
-	System_PeersAdd_FullMethodName       = "/v1.System/PeersAdd"
-	System_PeersList_FullMethodName      = "/v1.System/PeersList"
-	System_PeersRelayList_FullMethodName = "/v1.System/PeersRelayList"
-	System_PeersStatus_FullMethodName    = "/v1.System/PeersStatus"
-	System_RelayStatus_FullMethodName    = "/v1.System/RelayStatus"
-	System_Subscribe_FullMethodName      = "/v1.System/Subscribe"
-	System_BlockByNumber_FullMethodName  = "/v1.System/BlockByNumber"
-	System_Export_FullMethodName         = "/v1.System/Export"
+	System_GetStatus_FullMethodName        = "/v1.System/GetStatus"
+	System_PeersAdd_FullMethodName         = "/v1.System/PeersAdd"
+	System_PeersList_FullMethodName        = "/v1.System/PeersList"
+	System_PeersRelayList_FullMethodName   = "/v1.System/PeersRelayList"
+	System_PeersStatus_FullMethodName      = "/v1.System/PeersStatus"
+	System_RelayStatus_FullMethodName      = "/v1.System/RelayStatus"
+	System_RelayConnections_FullMethodName = "/v1.System/RelayConnections"
+	System_Subscribe_FullMethodName        = "/v1.System/Subscribe"
+	System_BlockByNumber_FullMethodName    = "/v1.System/BlockByNumber"
+	System_Export_FullMethodName           = "/v1.System/Export"
 )
 
 // SystemClient is the client API for System service.
@@ -47,6 +48,8 @@ type SystemClient interface {
 	PeersStatus(ctx context.Context, in *PeersStatusRequest, opts ...grpc.CallOption) (*Peer, error)
 	// PeersInfo returns the info of relay peer
 	RelayStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Peer, error)
+	// RelayConnection returns the info of connections
+	RelayConnections(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RelayConnectionsCount, error)
 	// Subscribe subscribes to blockchain events
 	Subscribe(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (System_SubscribeClient, error)
 	// Export returns blockchain data
@@ -111,6 +114,15 @@ func (c *systemClient) PeersStatus(ctx context.Context, in *PeersStatusRequest, 
 func (c *systemClient) RelayStatus(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Peer, error) {
 	out := new(Peer)
 	err := c.cc.Invoke(ctx, System_RelayStatus_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *systemClient) RelayConnections(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*RelayConnectionsCount, error) {
+	out := new(RelayConnectionsCount)
+	err := c.cc.Invoke(ctx, System_RelayConnections_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +218,8 @@ type SystemServer interface {
 	PeersStatus(context.Context, *PeersStatusRequest) (*Peer, error)
 	// PeersInfo returns the info of relay peer
 	RelayStatus(context.Context, *emptypb.Empty) (*Peer, error)
+	// RelayConnection returns the info of connections
+	RelayConnections(context.Context, *emptypb.Empty) (*RelayConnectionsCount, error)
 	// Subscribe subscribes to blockchain events
 	Subscribe(*emptypb.Empty, System_SubscribeServer) error
 	// Export returns blockchain data
@@ -236,6 +250,9 @@ func (UnimplementedSystemServer) PeersStatus(context.Context, *PeersStatusReques
 }
 func (UnimplementedSystemServer) RelayStatus(context.Context, *emptypb.Empty) (*Peer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RelayStatus not implemented")
+}
+func (UnimplementedSystemServer) RelayConnections(context.Context, *emptypb.Empty) (*RelayConnectionsCount, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RelayConnections not implemented")
 }
 func (UnimplementedSystemServer) Subscribe(*emptypb.Empty, System_SubscribeServer) error {
 	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
@@ -367,6 +384,24 @@ func _System_RelayStatus_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _System_RelayConnections_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SystemServer).RelayConnections(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: System_RelayConnections_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SystemServer).RelayConnections(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _System_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(emptypb.Empty)
 	if err := stream.RecvMsg(m); err != nil {
@@ -457,6 +492,10 @@ var System_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RelayStatus",
 			Handler:    _System_RelayStatus_Handler,
+		},
+		{
+			MethodName: "RelayConnections",
+			Handler:    _System_RelayConnections_Handler,
 		},
 		{
 			MethodName: "BlockByNumber",

@@ -7,20 +7,25 @@ import (
 	"github.com/emc-protocol/edge-matrix-computing/command/helper"
 )
 
-type PeersStatusResult struct {
-	ID        string   `json:"id"`
-	Protocols []string `json:"protocols"`
-	Addresses []string `json:"addresses"`
+type RelayConnectionsCountResult struct {
+	Connected      uint64 `json:"connected"`
+	MaxReservation int64  `json:"maxReservation"`
 }
 
-func (r *PeersStatusResult) GetOutput() string {
+func newRelayConnectionsCountResult(connected uint64, maxReservation int64) *RelayConnectionsCountResult {
+	return &RelayConnectionsCountResult{
+		Connected:      connected,
+		MaxReservation: maxReservation,
+	}
+}
+
+func (r *RelayConnectionsCountResult) GetOutput() string {
 	var buffer bytes.Buffer
 
-	buffer.WriteString("\n[PEER STATUS]\n")
+	buffer.WriteString("\n[RELAY CONNECTIONS]\n")
 	buffer.WriteString(helper.FormatKV([]string{
-		fmt.Sprintf("ID|%s", r.ID),
-		fmt.Sprintf("Protocols|%s", r.Protocols),
-		fmt.Sprintf("Addresses|%s", r.Addresses),
+		fmt.Sprintf("MaxReservation|%d", r.MaxReservation),
+		fmt.Sprintf("Connected|%d", r.Connected),
 	}))
 	buffer.WriteString("\n")
 

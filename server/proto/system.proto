@@ -25,6 +25,9 @@ service System {
   // PeersInfo returns the info of relay peer
   rpc RelayStatus(google.protobuf.Empty) returns (Peer);
 
+  // RelayConnection returns the info of connections
+  rpc RelayConnections(google.protobuf.Empty) returns (RelayConnectionsCount);
+
   // Subscribe subscribes to blockchain events
   rpc Subscribe(google.protobuf.Empty) returns (stream BlockchainEvent);
 
@@ -33,6 +36,11 @@ service System {
 
   // Export returns blockchain data
   rpc Export(ExportRequest) returns (stream ExportEvent);
+}
+
+message RelayConnectionsCount {
+  uint64 connected = 1;
+  int64 maxReservations = 2;
 }
 
 message BlockchainEvent {
@@ -64,6 +72,7 @@ message Peer {
   string id = 1;
   repeated string protocols = 2;
   repeated string addrs = 3;
+  string reservation = 4;
 }
 
 message PeersAddRequest {

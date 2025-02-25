@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/emc-protocol/edge-matrix-computing/server/proto"
 	"github.com/emc-protocol/edge-matrix-core/core/network/common"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -105,6 +106,25 @@ func (s *systemService) PeersList(
 	return resp, nil
 }
 
+// RelayConnections implements the 'peers relay' operator service
+func (s *systemService) RelayConnections(
+	ctx context.Context,
+	req *empty.Empty,
+) (*proto.RelayConnectionsCount, error) {
+	resp := &proto.RelayConnectionsCount{
+		Connected:       0,
+		MaxReservations: 0,
+	}
+
+	if s.server.relayServer != nil {
+		relayHost := s.server.relayServer.GetHost()
+		resp.Connected = uint64(len(relayHost.Network().Peers()))
+		resp.MaxReservations = int64(s.server.relayServer.MaxReservations)
+	}
+
+	return resp, nil
+}
+
 // PeersRelayList implements the 'peers relaylist' operator service
 func (s *systemService) PeersRelayList(
 	ctx context.Context,
@@ -131,23 +151,6 @@ func (s *systemService) PeersRelayList(
 		})
 	}
 
-	resp.Peers = append(resp.Peers, &proto.Peer{
-		Id: "-----------------------------------------------------",
-	})
-
-	relayPeers := s.server.relayClient.RelayPeers()
-	if relayPeers != nil && len(relayPeers) > 0 {
-		addrs := []string{}
-		for _, addr := range relayPeers[0].Info.Addrs {
-			addrs = append(addrs, addr.String())
-		}
-
-		resp.Peers = append(resp.Peers, &proto.Peer{
-			Id:    relayPeers[0].Info.ID.String(),
-			Addrs: addrs,
-		})
-	}
-
 	return resp, nil
 }
 
@@ -163,13 +166,14 @@ func (s *systemService) RelayStatus(
 	relayPeers := s.server.relayClient.RelayPeers()
 	if relayPeers != nil && len(relayPeers) > 0 {
 		addrs := []string{}
-		for _, addr := range relayPeers[0].Info.Addrs {
+		for _, addr := range relayPeers[0].Info.Info.Addrs {
 			addrs = append(addrs, addr.String())
 		}
-
+		resv := relayPeers[0].Reservation
 		peer := &proto.Peer{
-			Id:    relayPeers[0].Info.ID.String(),
-			Addrs: addrs,
+			Id:          relayPeers[0].Info.Info.ID.String(),
+			Addrs:       addrs,
+			Reservation: fmt.Sprintf("LimitData:%d, LimitDuration:%v, Expiration:%v, Addrs:%v", resv.LimitData, resv.LimitDuration, resv.Expiration, resv.Addrs),
 		}
 		return peer, nil
 	}

@@ -1,4 +1,4 @@
-package relay
+package list
 
 import (
 	"context"
@@ -12,8 +12,8 @@ import (
 
 func GetCommand() *cobra.Command {
 	peersListCmd := &cobra.Command{
-		Use:   "relay",
-		Short: "Returns the count of clients connected to relay server",
+		Use:   "list",
+		Short: "Returns the list of status nodes",
 		Run:   runCommand,
 	}
 
@@ -24,7 +24,7 @@ func runCommand(cmd *cobra.Command, _ []string) {
 	outputter := command.InitializeOutputter(cmd)
 	defer outputter.WriteOutput()
 
-	relayConnectonsCount, err := getRelayConnectionsCount(helper.GetGRPCAddress(cmd))
+	peersList, err := getPeersRelayList(helper.GetGRPCAddress(cmd))
 	if err != nil {
 		outputter.SetError(err)
 
@@ -32,15 +32,15 @@ func runCommand(cmd *cobra.Command, _ []string) {
 	}
 
 	outputter.SetCommandResult(
-		newRelayConnectionsCountResult(relayConnectonsCount.Connected, relayConnectonsCount.MaxReservations),
+		newPeersListResult(peersList.Peers),
 	)
 }
 
-func getRelayConnectionsCount(grpcAddress string) (*proto.RelayConnectionsCount, error) {
+func getPeersRelayList(grpcAddress string) (*proto.PeersListResponse, error) {
 	client, err := helper.GetSystemClientConnection(grpcAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	return client.RelayConnections(context.Background(), &empty.Empty{})
+	return client.PeersRelayList(context.Background(), &empty.Empty{})
 }

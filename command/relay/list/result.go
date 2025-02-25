@@ -1,4 +1,4 @@
-package relaylist
+package list
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ type PeersListResult struct {
 func newPeersListResult(peers []*proto.Peer) *PeersListResult {
 	resultPeers := make([]string, len(peers))
 	for i, p := range peers {
-		resultPeers[i] = p.Id
+		resultPeers[i] = p.String()
 	}
 
 	return &PeersListResult{
@@ -31,7 +31,7 @@ func (r *PeersListResult) GetOutput() string {
 	if len(r.Peers) == 0 {
 		buffer.WriteString("No peers found")
 	} else {
-		buffer.WriteString(fmt.Sprintf("Number of peers: %d\n\n", len(r.Peers)-1))
+		buffer.WriteString(fmt.Sprintf("Number of peers: %d\n\n", len(r.Peers)))
 
 		rows := make([]string, len(r.Peers))
 		for i, p := range r.Peers {
