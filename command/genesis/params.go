@@ -24,6 +24,7 @@ type genesisParams struct {
 	name        string
 	networkId   int64
 	bootNodes   []string
+	relayNodes  []string
 
 	genesisConfig *config.GenesisConfig
 }
@@ -80,7 +81,7 @@ func (p *genesisParams) initGenesisConfig() error {
 		Name:       p.name,
 		NetworkId:  p.networkId,
 		Bootnodes:  p.bootNodes,
-		Relaynodes: []string{},
+		Relaynodes: p.relayNodes,
 	}
 
 	p.genesisConfig = genesisConfig

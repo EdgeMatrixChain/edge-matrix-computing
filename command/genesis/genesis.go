@@ -51,6 +51,14 @@ func setFlags(cmd *cobra.Command) {
 		[]string{},
 		"multiAddr URL for p2p discovery bootstrap. This flag can be used multiple times",
 	)
+
+	cmd.Flags().StringArrayVar(
+		&params.relayNodes,
+		command.RelaynodeFlag,
+		[]string{},
+		"multiAddr URL for relay discovery bootstrap. This flag can be used multiple times",
+	)
+
 }
 
 func runPreRun(cmd *cobra.Command, _ []string) error {
