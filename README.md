@@ -110,3 +110,6 @@ Response:
 }
 
 You can also open a browser and enter the address http://127.0.0.1:50005/edge/16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie/9527/home Then you can see the home page
+
+## License
+MIT License
