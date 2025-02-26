@@ -24,7 +24,7 @@ cd build
 ```
 
 ## Usage
-Step1: Initialize keys for network nodes:
+Step1: Initialize keys for relay nodes:
 
 Initialize the key for the relay node1
 ```sh
@@ -48,7 +48,24 @@ Public key (address) = 0x6D6Ca00263922bcFa38B7884AA9a2C97069B4454
 Node ID              = 16Uiu2HAm7U1QtzHESv44Pvg6eGkA6cr9pewVauiYRPkfDqoD2SQd
 ```
 
-Initialize the key for the edge node1
+Step 2: Generate an example. json file, It will print a local peer address. If you would like to run this on a separate machine, please replace the IP accordingly,
+And replace the nodeId with the actual text from the Step1.
+```sh
+ ./edge-matrix-computing genesis --dir example.json --name MyNetwork --network-id 1000 --bootnode=/ip4/127.0.0.1/tcp/50001/p2p/16Uiu2HAmKdcZsHngqMFzXjrhzWHBPJTDFjj9sdeEYVHqA1nm4hQr --bootnode=/ip4/127.0.0.1/tcp/51001/p2p/16Uiu2HAm7U1QtzHESv44Pvg6eGkA6cr9pewVauiYRPkfDqoD2SQd
+```
+
+Step 3: Start relay nodes
+```sh
+./edge-matrix-computing server --network example.json --data-dir node_1  --grpc-address 0.0.0.0:50000 --libp2p 0.0.0.0:50001 --jsonrpc 0.0.0.0:50002 --relay-libp2p 0.0.0.0:50004 --trans-proxy 0.0.0.0:50005 --relay-discovery --app-no-agent
+./edge-matrix-computing server --network example.json --data-dir node_2  --grpc-address 0.0.0.0:51000 --libp2p 0.0.0.0:51001 --jsonrpc 0.0.0.0:51002 --relay-libp2p 0.0.0.0:51004 --trans-proxy 0.0.0.0:51005 --relay-discovery --app-no-agent
+```
+
+Step 4: Generate an example_edge. json file, And replace the nodeId with the actual text from the Step1.
+```sh
+ ./edge-matrix-computing genesis --dir example_edge.json --name MyNetwork --network-id 1000 --relaynode=/ip4/127.0.0.1/tcp/50004/p2p/16Uiu2HAmKdcZsHngqMFzXjrhzWHBPJTDFjj9sdeEYVHqA1nm4hQr --relaynode=/ip4/127.0.0.1/tcp/51004/p2p/16Uiu2HAm7U1QtzHESv44Pvg6eGkA6cr9pewVauiYRPkfDqoD2SQd
+```
+
+Step 5: Initialize the key for the edge node1
 
 ```sh
 ./edge-matrix-computing secrets init --data-dir edge_1 
@@ -60,35 +77,19 @@ Public key (address) = 0x69Ea3778e328B0De0E61aE3941d48a75DB50cB6F
 Node ID              = 16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie
 ```
 
-Step 2: Generate an example. json file, It will print a local peer address. If you would like to run this on a separate machine, please replace the IP accordingly:
-```sh
- ./edge-matrix-computing genesis --dir example.json --name MyNetwork --network-id 1000 --bootnode=/ip4/127.0.0.1/tcp/50001/p2p/16Uiu2HAmKdcZsHngqMFzXjrhzWHBPJTDFjj9sdeEYVHqA1nm4hQr --bootnode=/ip4/127.0.0.1/tcp/51001/p2p/16Uiu2HAm7U1QtzHESv44Pvg6eGkA6cr9pewVauiYRPkfDqoD2SQd
-```
-
-Step 3: Start relay nodes
-```sh
-./edge-matrix-computing server --network example.json --data-dir node_1  --grpc-address 0.0.0.0:50000 --libp2p 0.0.0.0:50001 --jsonrpc 0.0.0.0:50002 --relay-libp2p 0.0.0.0:50004 --trans-proxy 0.0.0.0:50005 --relay-discovery --app-no-agent
-./edge-matrix-computing server --network example.json --data-dir node_2  --grpc-address 0.0.0.0:51000 --libp2p 0.0.0.0:51001 --jsonrpc 0.0.0.0:51002 --relay-libp2p 0.0.0.0:51004 --trans-proxy 0.0.0.0:51005 --relay-discovery --app-no-agent
-```
-
-Step 4: Generate an example_edge. json file
-```sh
- ./edge-matrix-computing genesis --dir example_edge.json --name MyNetwork --network-id 1000 --relaynode=/ip4/127.0.0.1/tcp/50004/p2p/16Uiu2HAmKdcZsHngqMFzXjrhzWHBPJTDFjj9sdeEYVHqA1nm4hQr --relaynode=/ip4/127.0.0.1/tcp/51004/p2p/16Uiu2HAm7U1QtzHESv44Pvg6eGkA6cr9pewVauiYRPkfDqoD2SQd
-```
-
-Step 5: Start the edge node， After 25 seconds of startup, the information of edge nodes will be synchronized to the P2P network
+Step 6: Start the edge node， After 25 seconds of startup, the information of edge nodes will be synchronized to the P2P network
 ```sh
 ./edge-matrix-computing server --network example_edge.json --data-dir edge_1  --grpc-address 0.0.0.0:52000  --libp2p 0.0.0.0:52001 - --relay-on --running-mode edge --app-url http://127.0.0.1 --app-no-auth --app-no-agent
 ```
 
-Step 6: Start the webapp
+Step 7: Start the webapp
 ```sh
 ./webapp
 ```
 
 As you can see, the prints the listening address `localhost:9527`.
 
-You can now use this webapp through P2P networks, for example with `curl`:
+You can now use this webapp through P2P networks, for example with `curl`. Please replace the nodeId with the actual text from the Step5.
 
 ```
 curl --location 'http://127.0.0.1:50005/edge/16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie/9527/echo' \
