@@ -146,5 +146,62 @@ Response:
 
 You can also open a browser and enter the address http://127.0.0.1:50005/edge/16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie/9527/home Then you can see the home page
 
+## Subscribe node event
+Edge nodes will broadcast their status to the network every 15 minutes or when they reconnect after a relay interruption. Establish a Websocket connection to the jsonRPC port of any relay node and send a subscription request to receive events from the edge node. The event information includes the basic information of the edge node, including the connected relay address and relay proxy service port.
+
+Example of jsonRPC address
+````
+ws://127.0.0.1:50002/edge_ws
+````
+
+Example of Subscription Request:
+````
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "edge_subscribe",
+  "params": [
+    "node",
+    {}
+  ]
+}
+````
+Received notifications
+````
+{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": "aad6f294-5c4d-4a64-b480-b97122c75d5e"
+}
+
+{
+    "jsonrpc": "2.0",
+    "method": "edge_subscription",
+    "params": {
+        "subscription": "aad6f294-5c4d-4a64-b480-b97122c75d5e",
+        "result": {
+            "Name": "",
+            "Tag": "",
+            "Version": " Build",
+            "PeerID": "16Uiu2HAkxMBf3qRfwRTbKKdr2bMnvAGj1JaTc66sxvQ6a8XeXR97",
+            "IpAddr": "150.107.*.*",
+            "AppOrigin": "{\"appOrigin\":\"edgematrix:LLM-ChatBot,edgematrix:deepseek7b\",\"gpuInfo\":\"[{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"}]\"}",
+            "ModelHash": "",
+            "Mac": "0c:42:a1:1f:33:2e",
+            "MemInfo": "{\"total\": 1082048880640, \"free\":845533614080, \"used_percent\":0.761393}",
+            "CpuInfo": "{\"Cpus\":64,\"VendorId\":\"AuthenticAMD\",\"Family\":\"23\",\"Model\":\"49\",\"Cores\":1,\"ModelName\":\"AMD EPYC 7302 16-Core Processor\",\"Mhz\":3000}",
+            "GpuInfo": "{\"gpus\":8,\"graphics_card\":[\"card #0  [affined to NUMA node 0]@0000:63:00.0 -\\u003e driver: 'ast' class: 'Display controller' vendor: 'ASPEED Technology, Inc.' product: 'ASPEED Graphics Family'\",\"card #1  [affined to NUMA node 0]@0000:61:00.0 -\\u003e driver: 'nvidia' class: 'Display controller' vendor: 'NVIDIA Corporation' product: 'GA102 [GeForce RTX 3090]'\",\"card #2  [affined to NUMA node 0]@0000:41:00.0 -\\u003e driver: 'nvidia' class: 'Display controller' vendor: 'NVIDIA Corporation' product: 'GA102 [GeForce RTX 3090]'\",\"card #3  [affined to NUMA node 0]@0000:01:00.0 -\\u003e driver: 'nvidia' class: 'Display controller' vendor: 'NVIDIA Corporation' product: 'GA102 [GeForce RTX 3090]'\",\"card #4  [affined to NUMA node 1]@0000:e1:00.0 -\\u003e driver: 'nvidia' class: 'Display controller' vendor: 'NVIDIA Corporation' product: 'GA102 [GeForce RTX 3090]'\",\"card #5  [affined to NUMA node 1]@0000:c1:00.0 -\\u003e driver: 'nvidia' class: 'Display controller' vendor: 'NVIDIA Corporation' product: 'GA102 [GeForce RTX 3090]'\",\"card #6  [affined to NUMA node 1]@0000:81:00.0 -\\u003e driver: 'nvidia' class: 'Display controller' vendor: 'NVIDIA Corporation' product: 'GA102 [GeForce RTX 3090]'\",\"card #7  [affined to NUMA node 1]@0000:a1:00.0 -\\u003e driver: 'nvidia' class: 'Display controller' vendor: 'NVIDIA Corporation' product: 'GA102 [GeForce RTX 3090]'\"]}",
+            "StartupTime": 1739869483739,
+            "Uptime": 94485191,
+            "GuageHeight": 0,
+            "GuageMax": 0,
+            "AveragePower": 0,
+            "RelayHost": "127.0.0.1",
+            "RelayProxyPort": 50005
+        }
+    }
+}
+...
+````
 ## License
 MIT License
