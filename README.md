@@ -1,6 +1,40 @@
 # P2P computing network with EdgeMatrixComputing
 
-This example shows how to create a P2P computing network with EdgeMatrixComputing:
+You can create a P2P network as shown below and connect the webapp to the edge of the network:
+```
++----------------+                 +----------------+                 +-----------------+            +-----------------+
+|                |                 |                |                 |                 |            |                 |
+|                | libp2p stream   |                | libp2p stream   |                 |  HTTP      |                 |
+|   Relay Node   <----------------->   Relay Node   <----------------->    Edge Node    <------------>   Webapp SERVER |
+|                |   Discovery     |                | p2p Reservation |                 |            |                 |
+|  libp2p host   |                 |  libp2p host   |                 |   libp2p host   |            |   local host    |
++------|---------+                 +-------|--------+                 +-----------------+            +-----------------+                   
+   libp2p stream                     libp2p stream 
+       |                                   |  
+   Discovery                           Discovery
++------|---------+                 +-------|--------+                 +-----------------+            +-----------------+
+|                |                 |                |                 |                 |            |                 |
+|                | libp2p stream   |                | libp2p stream   |                 |  HTTP      |                 |
+|   Relay Node   <----------------->   Relay Node   <----------------->    Edge Node    <------------>   Webapp SERVER |
+|                |   Discovery     |                | p2p Reservation |                 |            |                 |
+|  libp2p host   |                 |  libp2p host   |                 |   libp2p host   |            |   local host    |
++------|---------+                 +-------|--------+                 +-----------------+            +-----------------+                   
+   libp2p stream                     libp2p stream 
+       |                                   |  
+   Discovery                           Discovery
++------|---------+                 +-------|--------+                 +-----------------+            +-----------------+
+|                |                 |                |                 |                 |            |                 |
+|                | libp2p stream   |                | libp2p stream   |                 |  HTTP      |                 |
+|   Relay Node   <----------------->   Relay Node   <----------------->    Edge Node    <------------>   Webapp SERVER |
+|                |   Discovery     |                | p2p Reservation |                 |            |                 |
+|  libp2p host   |                 |  libp2p host   |                 |   libp2p host   |            |   local host    |
++------|---------+                 +-------|--------+                 +-----------------+            +-----------------+                   
+   libp2p stream                     libp2p stream 
+       |                                   |  
+      ...                                 ...
+```
+
+The following example shows how to create a P2P network and how to call a webapp connected to edge nodes：
 
 ```
                   +----------------+                +-----------------+              +-----------------+
