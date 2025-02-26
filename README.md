@@ -1,6 +1,6 @@
-# Distributed Computing Network with EdgeMatrixComputing
+# P2P computing network with EdgeMatrixComputing
 
-This example shows how to create a distributed computing network with EdgeMatrixComputing:
+This example shows how to create a P2P computing network with EdgeMatrixComputing:
 
 ```
                   +----------------+                +-----------------+              +-----------------+
@@ -24,7 +24,7 @@ cd build
 ```
 
 ## Usage
-Step1: Initialize keys for the network nodes:
+Step1: Initialize keys for network nodes:
 
 Initialize the key for the relay node1
 ```sh
