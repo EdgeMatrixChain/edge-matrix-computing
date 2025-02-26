@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: LGPL-3.0-only
 
-CORE_REPO="https://github.com/shawnstartup/edge-matrix-core.git"
+CORE_REPO="https://github.com/EdgeMatrixChain/edge-matrix-core.git"
 CORE_TAG="v1.0.2"
 CORE_DIR="./edge-matrix-core"
 
