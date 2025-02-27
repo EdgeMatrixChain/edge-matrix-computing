@@ -61,6 +61,17 @@ build-linux-amd64: check-go check-git
          -X 'github.com/emc-protocol/edge-matrix-computing/versioning.Build=$(COMMIT_HASH)'"\
     main.go
 
+build-linux-arm64: check-go check-git
+	@echo "  >  \033[32mBuilding linux-arm64 binary...\033[0m "
+	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
+	$(eval BRANCH = $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n'))
+	$(eval VERSION = $(shell git tag --points-at ${COMMIT_HASH}))
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o build/linux-arm64/edge-matrix-computing -ldflags="\
+         -X 'github.com/emc-protocol/edge-matrix-computing/versioning.Version=$(VERSION)' \
+         -X 'github.com/emc-protocol/edge-matrix-computing/versioning.Branch=$(BRANCH)' \
+         -X 'github.com/emc-protocol/edge-matrix-computing/versioning.Build=$(COMMIT_HASH)'"\
+    main.go
+
 build-windows-amd64: check-go check-git
 	@echo "  >  \033[32mBuilding windows-amd64 binary...\033[0m "
 	$(eval COMMIT_HASH = $(shell git rev-parse HEAD))
