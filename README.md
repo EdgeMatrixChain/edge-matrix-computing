@@ -52,6 +52,7 @@ From the `edge-matrix-computing` directory run the following:
 
 ```
 make import-core
+make get
 make build
 make build-example
 cd build
@@ -165,7 +166,7 @@ Example of all nodes request:
   "method": "edge_subscribe",
   "params": [
     "node",
-    { "name":"", "tag":"", "id": "", "version":""}
+    { "name":"", "id": "", "version":""}
   ]
 }
 ````
@@ -177,7 +178,7 @@ Example of nodeId=16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie request:
   "method": "edge_subscribe",
   "params": [
     "node",
-    { "name":"", "tag":"", "id": "16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie", "version":""}
+    { "name":"", "id": "16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie", "version":""}
   ]
 }
 ````
