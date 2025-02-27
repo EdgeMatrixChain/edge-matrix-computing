@@ -157,7 +157,7 @@ Example of jsonRPC address
 ws://127.0.0.1:50002/edge_ws
 ````
 
-Example of Subscription Request:
+Example of all nodes request:
 ````
 {
   "jsonrpc": "2.0",
@@ -165,10 +165,23 @@ Example of Subscription Request:
   "method": "edge_subscribe",
   "params": [
     "node",
-    {}
+    { "name":"", "tag":"", "id": "", "version":""}
   ]
 }
 ````
+Example of nodeId=16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie request:
+````
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "edge_subscribe",
+  "params": [
+    "node",
+    { "name":"", "tag":"", "id": "16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie", "version":""}
+  ]
+}
+````
+
 Received notifications
 ````
 {
@@ -186,8 +199,8 @@ Received notifications
             "Name": "",
             "Tag": "",
             "Version": " Build",
-            "PeerID": "16Uiu2HAkxMBf3qRfwRTbKKdr2bMnvAGj1JaTc66sxvQ6a8XeXR97",
-            "IpAddr": "150.107.*.*",
+            "PeerID": "16Uiu2HAkzBCWtZq49xzn4HcsGw7NZHSuSSS97HfzLyMDyY9KTDie",
+            "IpAddr": "127.0.*.*",
             "AppOrigin": "{\"appOrigin\":\"edgematrix:LLM-ChatBot,edgematrix:deepseek7b\",\"gpuInfo\":\"[{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"},{\\\"gpuMemory\\\":\\\"24\\\",\\\"gpuModel\\\":\\\"NVIDIA GeForce RTX 3090\\\"}]\"}",
             "ModelHash": "",
             "Mac": "0c:42:a1:1f:33:2e",
