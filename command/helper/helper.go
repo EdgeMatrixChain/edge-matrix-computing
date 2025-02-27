@@ -3,15 +3,15 @@ package helper
 import (
 	"errors"
 	"fmt"
-	minerOp "github.com/emc-protocol/edge-matrix-computing/miner/proto"
+	minerOp "github.com/EdgeMatrixChain/edge-matrix-computing/miner/proto"
 	"net"
 	"net/url"
 	"time"
 
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-computing/server"
-	"github.com/emc-protocol/edge-matrix-computing/server/proto"
-	"github.com/emc-protocol/edge-matrix-core/core/helper/common"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/server"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/server/proto"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/helper/common"
 
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"

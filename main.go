@@ -14,7 +14,7 @@ package main
 
 import (
 	_ "embed"
-	"github.com/emc-protocol/edge-matrix-computing/command/root"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/root"
 )
 
 func main() {

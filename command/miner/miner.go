@@ -1,9 +1,9 @@
 package miner
 
 import (
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-computing/command/miner/register"
-	"github.com/emc-protocol/edge-matrix-computing/command/miner/status"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/miner/register"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/miner/status"
 	"github.com/spf13/cobra"
 )
 

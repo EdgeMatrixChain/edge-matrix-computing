@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets"
 )
 
 var (

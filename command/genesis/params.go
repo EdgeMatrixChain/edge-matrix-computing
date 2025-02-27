@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-computing/config"
-	"github.com/emc-protocol/edge-matrix-core/core/helper/common"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/config"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/helper/common"
 )
 
 const (

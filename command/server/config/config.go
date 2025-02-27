@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/emc-protocol/edge-matrix-core/core/network"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/network"
 	"github.com/hashicorp/hcl"
 	"gopkg.in/yaml.v3"
 )

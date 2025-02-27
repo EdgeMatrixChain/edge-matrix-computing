@@ -1,10 +1,10 @@
 package secrets
 
 import (
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-computing/command/secrets/generate"
-	initCmd "github.com/emc-protocol/edge-matrix-computing/command/secrets/init"
-	"github.com/emc-protocol/edge-matrix-computing/command/secrets/output"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/secrets/generate"
+	initCmd "github.com/EdgeMatrixChain/edge-matrix-computing/command/secrets/init"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/secrets/output"
 	"github.com/spf13/cobra"
 )
 

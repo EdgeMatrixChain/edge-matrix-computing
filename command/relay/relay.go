@@ -1,9 +1,9 @@
 package relay
 
 import (
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-computing/command/relay/list"
-	"github.com/emc-protocol/edge-matrix-computing/command/relay/status"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/relay/list"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/relay/status"
 	"github.com/spf13/cobra"
 )
 

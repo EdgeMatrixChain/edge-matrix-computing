@@ -1,11 +1,11 @@
 package server
 
 import (
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets/awsssm"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets/gcpssm"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets/hashicorpvault"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets/local"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets/awsssm"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets/gcpssm"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets/hashicorpvault"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets/local"
 )
 
 //type GenesisFactoryHook func(config *config.Chain, engineName string) func(*state.Transition) error

@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/emc-protocol/edge-matrix-computing/server/proto"
-	"github.com/emc-protocol/edge-matrix-core/core/network/common"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/server/proto"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/network/common"
 	"github.com/libp2p/go-libp2p/core/peer"
 	empty "google.golang.org/protobuf/types/known/emptypb"
 )

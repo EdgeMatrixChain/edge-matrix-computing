@@ -2,11 +2,11 @@ package server
 
 import (
 	"fmt"
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-computing/command/server/config"
-	"github.com/emc-protocol/edge-matrix-computing/command/server/export"
-	"github.com/emc-protocol/edge-matrix-computing/server"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/server/config"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/server/export"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/server"
 	"github.com/spf13/cobra"
 )
 

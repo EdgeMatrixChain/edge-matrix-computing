@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/emc-protocol/edge-matrix-core/core/types"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/types"
 )
 
 // Params are all the set of params for the config

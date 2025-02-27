@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/emc-protocol/edge-matrix-core/core/helper/rpc"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/helper/rpc"
 )
 
 type AppAgent struct {

@@ -1,10 +1,10 @@
-module github.com/emc-protocol/edge-matrix-computing
+module github.com/EdgeMatrixChain/edge-matrix-computing
 
 go 1.23
 
 require (
+	github.com/EdgeMatrixChain/edge-matrix-core v0.0.0-00010101000000-000000000000
 	github.com/armon/go-metrics v0.4.1
-	github.com/emc-protocol/edge-matrix-core v0.0.0-00010101000000-000000000000
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/hcl v1.0.1-vault-5
 	github.com/libp2p/go-libp2p v0.39.0
@@ -13,6 +13,8 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/spf13/cobra v1.8.1
+	github.com/stretchr/testify v1.10.0
+	github.com/umbracle/fastrlp v0.0.0-20220527094140-59d5dd30e722
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.36.4
 	gopkg.in/DataDog/dd-trace-go.v1 v1.71.1
@@ -192,11 +194,9 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/tinylib/msgp v1.2.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
-	github.com/umbracle/fastrlp v0.0.0-20220527094140-59d5dd30e722 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
@@ -242,4 +242,4 @@ require (
 	lukechampine.com/blake3 v1.3.0 // indirect
 )
 
-replace github.com/emc-protocol/edge-matrix-core => ./edge-matrix-core
+replace github.com/EdgeMatrixChain/edge-matrix-core => ./edge-matrix-core

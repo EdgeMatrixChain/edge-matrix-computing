@@ -2,8 +2,8 @@ package miner
 
 import (
 	"context"
-	"github.com/emc-protocol/edge-matrix-computing/miner/proto"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/miner/proto"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets"
 	"github.com/hashicorp/go-hclog"
 	"github.com/libp2p/go-libp2p/core/host"
 	"google.golang.org/protobuf/types/known/emptypb"

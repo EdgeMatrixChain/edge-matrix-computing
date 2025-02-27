@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-computing/server/proto"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/server/proto"
 )
 
 type PeersListResult struct {

@@ -1,8 +1,8 @@
 package version
 
 import (
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-computing/versioning"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/versioning"
 	"github.com/spf13/cobra"
 )
 

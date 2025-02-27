@@ -3,9 +3,9 @@ package init
 import (
 	"errors"
 
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets/helper"
 )
 
 const (

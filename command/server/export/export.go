@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-computing/command/server/config"
-	"github.com/emc-protocol/edge-matrix-core/core/helper/common"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/server/config"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/helper/common"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

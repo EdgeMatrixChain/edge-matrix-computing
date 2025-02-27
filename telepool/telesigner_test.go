@@ -3,12 +3,12 @@ package telepool
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/emc-protocol/edge-matrix-core/core/crypto"
-	"github.com/emc-protocol/edge-matrix-core/core/helper/hex"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/crypto"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/helper/hex"
 	"math/big"
 	"testing"
 
-	"github.com/emc-protocol/edge-matrix-core/core/types"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/types"
 	"github.com/stretchr/testify/assert"
 )
 

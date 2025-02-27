@@ -1,7 +1,7 @@
 package output
 
 import (
-	"github.com/emc-protocol/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
 	"github.com/spf13/cobra"
 )
 

@@ -3,17 +3,17 @@ package server
 import (
 	"errors"
 	"fmt"
-	"github.com/emc-protocol/edge-matrix-computing/config"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/config"
 	"math"
 	"net"
 
-	serverConfig "github.com/emc-protocol/edge-matrix-computing/command/server/config"
+	serverConfig "github.com/EdgeMatrixChain/edge-matrix-computing/command/server/config"
 
-	"github.com/emc-protocol/edge-matrix-core/core/network/common"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/network/common"
 
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-core/core/network"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/network"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets"
 )
 
 var (

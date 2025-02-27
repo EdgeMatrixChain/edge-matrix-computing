@@ -2,13 +2,13 @@ package server
 
 import (
 	"errors"
-	config2 "github.com/emc-protocol/edge-matrix-computing/config"
+	config2 "github.com/EdgeMatrixChain/edge-matrix-computing/config"
 	"net"
 
-	"github.com/emc-protocol/edge-matrix-computing/command/server/config"
-	"github.com/emc-protocol/edge-matrix-computing/server"
-	"github.com/emc-protocol/edge-matrix-core/core/network"
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/server/config"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/server"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/network"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets"
 	"github.com/hashicorp/go-hclog"
 	"github.com/multiformats/go-multiaddr"
 )

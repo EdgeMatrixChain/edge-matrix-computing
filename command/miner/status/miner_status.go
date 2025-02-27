@@ -3,9 +3,9 @@ package status
 import (
 	"context"
 
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	minerOp "github.com/emc-protocol/edge-matrix-computing/miner/proto"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	minerOp "github.com/EdgeMatrixChain/edge-matrix-computing/miner/proto"
 	"github.com/spf13/cobra"
 	empty "google.golang.org/protobuf/types/known/emptypb"
 )

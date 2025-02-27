@@ -2,14 +2,14 @@ package root
 
 import (
 	"fmt"
-	"github.com/emc-protocol/edge-matrix-computing/command/genesis"
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-computing/command/miner"
-	"github.com/emc-protocol/edge-matrix-computing/command/peers"
-	"github.com/emc-protocol/edge-matrix-computing/command/relay"
-	"github.com/emc-protocol/edge-matrix-computing/command/secrets"
-	"github.com/emc-protocol/edge-matrix-computing/command/server"
-	"github.com/emc-protocol/edge-matrix-computing/command/version"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/genesis"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/miner"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/peers"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/relay"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/server"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/version"
 	"os"
 
 	"github.com/spf13/cobra"

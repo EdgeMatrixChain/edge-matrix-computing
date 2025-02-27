@@ -1,13 +1,13 @@
 package server
 
 import (
-	"github.com/emc-protocol/edge-matrix-computing/config"
-	"github.com/emc-protocol/edge-matrix-core/core/network"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/config"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/network"
 	"net"
 
 	"github.com/hashicorp/go-hclog"
 
-	"github.com/emc-protocol/edge-matrix-core/core/secrets"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/secrets"
 )
 
 const DefaultGRPCPort int = 50000

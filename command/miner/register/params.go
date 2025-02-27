@@ -3,12 +3,12 @@ package register
 import (
 	"context"
 	"errors"
-	"github.com/emc-protocol/edge-matrix-computing/command"
-	"github.com/emc-protocol/edge-matrix-computing/command/helper"
-	"github.com/emc-protocol/edge-matrix-computing/miner"
-	minerOp "github.com/emc-protocol/edge-matrix-computing/miner/proto"
-	"github.com/emc-protocol/edge-matrix-core/core/helper/hex"
-	"github.com/emc-protocol/edge-matrix-core/core/types"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/command/helper"
+	"github.com/EdgeMatrixChain/edge-matrix-computing/miner"
+	minerOp "github.com/EdgeMatrixChain/edge-matrix-computing/miner/proto"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/helper/hex"
+	"github.com/EdgeMatrixChain/edge-matrix-core/core/types"
 	"regexp"
 )
 
