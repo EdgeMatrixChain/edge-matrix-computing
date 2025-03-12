@@ -51,8 +51,7 @@ type Config struct {
 	RunningMode string
 	AppNoAuth   bool
 	AppNoAgent  bool
-
-	EmcHost string
+	AuthUrl     string
 }
 
 // Telemetry holds the config details for metric services

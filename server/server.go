@@ -91,6 +91,24 @@ type Server struct {
 
 	// telegram pool
 	telepool *telepool.TelegramPool
+
+	// edge matrix auth agent
+	authAgent *appAgent.AuthAgent
+}
+
+func (s *Server) AuthBearer(bearer string, nodeId string, port int) (bool, string) {
+	//TODO implement me
+	ok, apiKey, err := s.authAgent.AuthBearer(bearer, nodeId, port)
+	if err != nil {
+		s.logger.Error("AuthBearer failed", "err", err.Error())
+
+		return false, ""
+	}
+	if !ok {
+		s.logger.Warn("AuthBearer failed", "result", ok)
+	}
+
+	return true, apiKey
 }
 
 func (s *Server) ValidateBearer(bearer string) bool {
@@ -221,6 +239,7 @@ func NewServer(config *Config) (*Server, error) {
 		config:     config,
 		grpcServer: grpc.NewServer(),
 		appAgent:   appAgent.NewAppAgent(fmt.Sprintf("%s:%d", config.AppUrl, config.AppPort)),
+		authAgent:  appAgent.NewAuthAgent(config.AuthUrl),
 	}
 
 	m.logger.Info("Data dir", "path", config.DataDir)
@@ -633,7 +652,7 @@ func (s *Server) setupTransparentProxy() error {
 		AccessControlAllowOrigin: s.config.TransparentProxy.AccessControlAllowOrigin,
 	}
 
-	srv, err := proxy.NewTransportProxy(s.logger, conf, nil)
+	srv, err := proxy.NewTransportProxy(s.logger, conf, s.config.AppNoAuth)
 	if err != nil {
 		return err
 	}

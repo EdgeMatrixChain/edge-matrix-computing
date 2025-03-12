@@ -174,6 +174,13 @@ func setFlags(cmd *cobra.Command) {
 		"the url for application",
 	)
 
+	cmd.Flags().StringVar(
+		&params.rawConfig.AuthUrl,
+		authUrlFlag,
+		"https://openapi.emchub.ai/emchub/api",
+		"the base url for auth",
+	)
+
 	cmd.Flags().Uint64Var(
 		&params.rawConfig.AppPort,
 		appPortFlag,

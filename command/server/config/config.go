@@ -40,7 +40,8 @@ type Config struct {
 	AppName    string `json:"app_name,omitempty" yaml:"app_name,omitempty"`
 	AppNoAuth  bool   `json:"app_no_auth,omitempty" yaml:"app_no_auth,omitempty"`
 	AppNoAgent bool   `json:"app_no_agent,omitempty" yaml:"app_no_agent,omitempty"`
-	EmcHost    string `json:"emc_host,omitempty" yaml:"emc_host,omitempty"`
+
+	AuthUrl string `json:"auth_url,omitempty" yaml:"auth_url,omitempty"`
 }
 
 // Telemetry holds the config details for metric services.

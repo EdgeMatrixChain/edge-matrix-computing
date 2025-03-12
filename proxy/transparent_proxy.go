@@ -58,6 +58,7 @@ type TransparentProxyStore interface {
 	GetNetworkHost() host.Host
 	GetAppPeer(id string) *application.AppPeer
 	ValidateBearer(bearer string) bool
+	AuthBearer(bearer string, nodeId string, port int) (bool, string)
 }
 
 type Config struct {
@@ -70,14 +71,14 @@ type Config struct {
 }
 
 // NewTransportProxy returns the TransparentProxy http server
-func NewTransportProxy(logger hclog.Logger, config *Config, middlewareFactory MiddlewareFactory) (*TransparentProxy, error) {
+func NewTransportProxy(logger hclog.Logger, config *Config, noAuth bool) (*TransparentProxy, error) {
 	srv := &TransparentProxy{
 		logger: logger.Named("transport-proxy"),
 		config: config,
 	}
 
 	// start http server
-	if err := srv.setupHTTP(middlewareFactory); err != nil {
+	if err := srv.setupHTTP(noAuth); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +87,7 @@ func NewTransportProxy(logger hclog.Logger, config *Config, middlewareFactory Mi
 
 type MiddlewareFactory func(config *Config) func(http.Handler) http.Handler
 
-func (j *TransparentProxy) setupHTTP(middlewareFactory MiddlewareFactory) error {
+func (j *TransparentProxy) setupHTTP(noAuth bool) error {
 	j.logger.Info("http server started", "addr", j.config.Addr.String())
 
 	lis, err := net.Listen("tcp", j.config.Addr.String())
@@ -102,8 +103,8 @@ func (j *TransparentProxy) setupHTTP(middlewareFactory MiddlewareFactory) error 
 	// The middleware factory returns a handler, so we need to wrap the handler function properly.
 	proxyHandler := http.HandlerFunc(j.handle)
 
-	if middlewareFactory != nil {
-		mux.Handle("/", middlewareFactory(j.config)(proxyHandler))
+	if !noAuth {
+		mux.Handle("/", j.bearerMiddlewareFactory()(proxyHandler))
 	} else {
 		mux.Handle("/", j.defaultMiddlewareFactory()(proxyHandler))
 	}
@@ -140,23 +141,10 @@ func getBearer(r *http.Request) string {
 	return parts[1]
 }
 
-// The BearerMiddlewareFactory builds a middleware which enables authorization with Bearer.
-func (j *TransparentProxy) BearerMiddlewareFactory() func(http.Handler) http.Handler {
+// The bearerMiddlewareFactory builds a middleware which enables authorization with Bearer.
+func (j *TransparentProxy) bearerMiddlewareFactory() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// verify bearer
-			bearer := getBearer(r)
-			if bearer == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-
-				return
-			}
-			if !j.config.Store.ValidateBearer(bearer) {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-
-				return
-			}
-
 			origin := r.Header.Get("Origin")
 			for _, allowedOrigin := range j.config.AccessControlAllowOrigin {
 				if allowedOrigin == "*" {
@@ -182,6 +170,23 @@ func (j *TransparentProxy) BearerMiddlewareFactory() func(http.Handler) http.Han
 				return
 			}
 			j.logger.Info("handle", "NodeID", pathInfo.NodeID, "Port", pathInfo.Port, "InterfaceURL", pathInfo.InterfaceURL)
+
+			// verify bearer
+			bearer := getBearer(r)
+			if bearer == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
+				return
+			}
+			ok, apiToken := j.config.Store.AuthBearer(bearer, pathInfo.NodeID, pathInfo.Port)
+			if !ok {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
+				return
+			}
+
+			// replace Bearer with apiToken
+			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 
 			// add Header: X-Forwarded-Port, X-Forwarded-Host
 			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
