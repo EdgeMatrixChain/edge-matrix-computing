@@ -92,8 +92,8 @@ And replace the nodeId with the actual text from the Step1.
 
 #### Step 3: Start relay nodes
 ```sh
-./edge-matrix-computing server --network example.json --data-dir node_1  --grpc-address 0.0.0.0:50000 --libp2p 0.0.0.0:50001 --jsonrpc 0.0.0.0:50002 --relay-libp2p 0.0.0.0:50004 --trans-proxy 0.0.0.0:50005 --relay-discovery --app-no-agent
-./edge-matrix-computing server --network example.json --data-dir node_2  --grpc-address 0.0.0.0:51000 --libp2p 0.0.0.0:51001 --jsonrpc 0.0.0.0:51002 --relay-libp2p 0.0.0.0:51004 --trans-proxy 0.0.0.0:51005 --relay-discovery --app-no-agent
+./edge-matrix-computing server --network example.json --data-dir node_1  --grpc-address 0.0.0.0:50000 --libp2p 0.0.0.0:50001 --jsonrpc 0.0.0.0:50002 --relay-libp2p 0.0.0.0:50004 --trans-proxy 0.0.0.0:50005 --relay-discovery  --app-no-auth --app-no-agent
+./edge-matrix-computing server --network example.json --data-dir node_2  --grpc-address 0.0.0.0:51000 --libp2p 0.0.0.0:51001 --jsonrpc 0.0.0.0:51002 --relay-libp2p 0.0.0.0:51004 --trans-proxy 0.0.0.0:51005 --relay-discovery  --app-no-auth --app-no-agent
 ```
 
 #### Step 4: Generate an example_edge. json file
