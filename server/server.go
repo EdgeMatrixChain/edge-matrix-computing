@@ -2,8 +2,6 @@ package server
 
 import (
 	"bufio"
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	appAgent "github.com/EdgeMatrixChain/edge-matrix-computing/agent"
@@ -25,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -227,6 +226,20 @@ func getBearer(r *http.Request) string {
 	return parts[1]
 }
 
+// getForwardInfo from http.Request
+func getEdgePath(r *http.Request) *proxy.EdgePath {
+	edgePath := &proxy.EdgePath{}
+
+	edgePath.NodeID = r.Header.Get("X-Forwarded-NodeID")
+	edgePath.InterfaceURL = r.Header.Get("X-Forwarded-Interface")
+	port := r.Header.Get("X-Forwarded-Port")
+	atoi, err := strconv.Atoi(port)
+	if err == nil {
+		edgePath.Port = atoi
+	}
+	return edgePath
+}
+
 // NewServer creates a new Minimal server, using the passed in configuration
 func NewServer(config *Config) (*Server, error) {
 	logger, logErr := newLoggerFromConfig(config)
@@ -379,26 +392,14 @@ func NewServer(config *Config) (*Server, error) {
 			}
 
 			defer r.Body.Close()
-			body, bodyErr := io.ReadAll(r.Body)
-			if bodyErr != nil {
-				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, bodyErr.Error()), http.StatusServiceUnavailable)
 
-				return
-			}
-
-			m.logger.Debug(proxy.TransparentForwardUrl, "body", string(body))
-
-			var transForward proxy.TransparentForward
-			if err := json.Unmarshal(body, &transForward); err != nil {
-				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, err.Error()), http.StatusServiceUnavailable)
-
-				return
-			}
+			//m.logger.Debug(proxy.TransparentForwardUrl, "body", string(body))
+			edgePath := getEdgePath(r)
 
 			client := &http.Client{}
 			var targetURL = ""
 			if m.config.AppNoAgent {
-				targetURL = fmt.Sprintf("%s:%d/%s", m.config.AppUrl, transForward.EdgePath.Port, transForward.EdgePath.InterfaceURL)
+				targetURL = fmt.Sprintf("%s:%d/%s", m.config.AppUrl, edgePath.Port, edgePath.InterfaceURL)
 			} else {
 				err, proxyPath := m.appAgent.GetProxyPath()
 				if err != nil {
@@ -406,11 +407,11 @@ func NewServer(config *Config) (*Server, error) {
 
 					return
 				}
-				targetURL = fmt.Sprintf("%s:%d%s/%d/%s", m.config.AppUrl, m.config.AppPort, proxyPath, transForward.EdgePath.Port, transForward.EdgePath.InterfaceURL)
+				targetURL = fmt.Sprintf("%s:%d%s/%d/%s", m.config.AppUrl, m.config.AppPort, proxyPath, edgePath.Port, edgePath.InterfaceURL)
 			}
 			m.logger.Debug(proxy.TransparentForwardUrl, "targetURL", targetURL)
 
-			req, reqErr := http.NewRequest(r.Method, targetURL, bytes.NewReader([]byte(transForward.Payload)))
+			req, reqErr := http.NewRequest(r.Method, targetURL, r.Body)
 			if reqErr != nil {
 				http.Error(w, fmt.Sprintf("%s %s", proxy.TransparentForwardUrl, reqErr.Error()), http.StatusInternalServerError)
 

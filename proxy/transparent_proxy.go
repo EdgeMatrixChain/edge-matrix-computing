@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -188,9 +187,11 @@ func (j *TransparentProxy) bearerMiddlewareFactory() func(http.Handler) http.Han
 			// replace Bearer with apiToken
 			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 
-			// add Header: X-Forwarded-Port, X-Forwarded-Host
-			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			// add Header: X-Forwarded-*
 			r.Header.Add("X-Forwarded-Host", j.config.Store.GetRelayHost().ID().String())
+			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			r.Header.Add("X-Forwarded-NodeID", pathInfo.NodeID)
+			r.Header.Add("X-Forwarded-Interface", pathInfo.InterfaceURL)
 
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "EdgePath", pathInfo)))
 		})
@@ -226,9 +227,11 @@ func (j *TransparentProxy) defaultMiddlewareFactory() func(http.Handler) http.Ha
 				return
 			}
 
-			// add Header: X-Forwarded-Port, X-Forwarded-Host
-			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			// add Header: X-Forwarded-*
 			r.Header.Add("X-Forwarded-Host", j.config.Store.GetRelayHost().ID().String())
+			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			r.Header.Add("X-Forwarded-NodeID", pathInfo.NodeID)
+			r.Header.Add("X-Forwarded-Interface", pathInfo.InterfaceURL)
 
 			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "EdgePath", pathInfo)))
 		})
@@ -298,6 +301,8 @@ func ParseEdgePath(req *http.Request) (*EdgePath, error) {
 }
 
 func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
+
 	pathInfo, ok := req.Context().Value("EdgePath").(*EdgePath)
 	if !ok {
 		http.Error(w, "Invalid edge path", http.StatusBadRequest)
@@ -323,14 +328,6 @@ func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Reques
 		if _, err = w.Write(resp); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-
-		return
-	}
-
-	defer req.Body.Close()
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
@@ -368,22 +365,8 @@ func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Reques
 	tr.RegisterProtocol("libp2p", p2phttp.NewTransport(clientHost, p2phttp.ProtocolOption(application.ProtoTagEcApp)))
 	client := &http.Client{Transport: tr}
 
-	//var payload string = ""
-	//if body != nil && len(body) > 0 {
-	//	payload = string(body)
-	//}
-	transparentForwardData := &TransparentForward{
-		EdgePath: *pathInfo,
-		Payload:  string(body),
-	}
-	data, err := json.Marshal(transparentForwardData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	targetURL := fmt.Sprintf("libp2p://%s%s", pathInfo.NodeID, TransparentForwardUrl)
-	request, err := http.NewRequest(req.Method, targetURL, bytes.NewBufferString(string(data)))
+	request, err := http.NewRequest(req.Method, targetURL, req.Body)
 	if err != nil {
 		http.Error(w, "Failed to create p2p request", http.StatusInternalServerError)
 		return
