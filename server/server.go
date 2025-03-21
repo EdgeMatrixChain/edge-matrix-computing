@@ -232,7 +232,7 @@ func getEdgePath(r *http.Request) *proxy.EdgePath {
 
 	edgePath.NodeID = r.Header.Get("X-Forwarded-NodeID")
 	edgePath.InterfaceURL = r.Header.Get("X-Forwarded-Interface")
-	port := r.Header.Get("X-Forwarded-Port")
+	port := r.Header.Get("X-Forwarded-EdgePort")
 	atoi, err := strconv.Atoi(port)
 	if err == nil {
 		edgePath.Port = atoi

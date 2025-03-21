@@ -189,7 +189,7 @@ func (j *TransparentProxy) bearerMiddlewareFactory() func(http.Handler) http.Han
 
 			// add Header: X-Forwarded-*
 			r.Header.Add("X-Forwarded-Host", j.config.Store.GetRelayHost().ID().String())
-			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			r.Header.Add("X-Forwarded-EdgePort", strconv.Itoa(pathInfo.Port))
 			r.Header.Add("X-Forwarded-NodeID", pathInfo.NodeID)
 			r.Header.Add("X-Forwarded-Interface", pathInfo.InterfaceURL)
 
@@ -229,7 +229,7 @@ func (j *TransparentProxy) defaultMiddlewareFactory() func(http.Handler) http.Ha
 
 			// add Header: X-Forwarded-*
 			r.Header.Add("X-Forwarded-Host", j.config.Store.GetRelayHost().ID().String())
-			r.Header.Add("X-Forwarded-Port", strconv.Itoa(pathInfo.Port))
+			r.Header.Add("X-Forwarded-EdgePort", strconv.Itoa(pathInfo.Port))
 			r.Header.Add("X-Forwarded-NodeID", pathInfo.NodeID)
 			r.Header.Add("X-Forwarded-Interface", pathInfo.InterfaceURL)
 
