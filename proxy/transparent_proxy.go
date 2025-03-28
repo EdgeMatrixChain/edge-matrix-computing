@@ -374,7 +374,9 @@ func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Reques
 	// forward headers
 	for key, values := range req.Header {
 		for _, value := range values {
-			request.Header.Add(key, value)
+			if key != "Access-Control-Allow-Origin" {
+				request.Header.Add(key, value)
+			}
 		}
 	}
 
