@@ -374,9 +374,7 @@ func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Reques
 	// forward headers
 	for key, values := range req.Header {
 		for _, value := range values {
-			if key != "Access-Control-Allow-Origin" {
-				request.Header.Add(key, value)
-			}
+			request.Header.Add(key, value)
 		}
 	}
 
@@ -388,7 +386,9 @@ func (j *TransparentProxy) handleRequest(w http.ResponseWriter, req *http.Reques
 	defer resp.Body.Close()
 
 	for key, value := range resp.Header {
-		w.Header().Set(key, value[0])
+		if key != "Access-Control-Allow-Origin" {
+			w.Header().Set(key, value[0])
+		}
 	}
 	w.WriteHeader(resp.StatusCode)
 	if resp.Header.Get("Content-Type") == "text/event-stream" {
