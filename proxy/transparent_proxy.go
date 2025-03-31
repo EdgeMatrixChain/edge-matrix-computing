@@ -144,6 +144,9 @@ func getBearer(r *http.Request) string {
 func (j *TransparentProxy) bearerMiddlewareFactory() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "*")
+
 			origin := r.Header.Get("Origin")
 			for _, allowedOrigin := range j.config.AccessControlAllowOrigin {
 				if allowedOrigin == "*" {
@@ -202,12 +205,14 @@ func (j *TransparentProxy) bearerMiddlewareFactory() func(http.Handler) http.Han
 func (j *TransparentProxy) defaultMiddlewareFactory() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "*")
+
 			origin := r.Header.Get("Origin")
 
 			for _, allowedOrigin := range j.config.AccessControlAllowOrigin {
 				if allowedOrigin == "*" {
 					w.Header().Set("Access-Control-Allow-Origin", "*")
-
 					break
 				}
 
