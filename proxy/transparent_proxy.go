@@ -173,22 +173,24 @@ func (j *TransparentProxy) bearerMiddlewareFactory() func(http.Handler) http.Han
 			}
 			j.logger.Info("handle", "NodeID", pathInfo.NodeID, "Port", pathInfo.Port, "InterfaceURL", pathInfo.InterfaceURL)
 
-			// verify bearer
-			bearer := getBearer(r)
-			if bearer == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			if r.Method != "OPTIONS" {
+				// verify bearer
+				bearer := getBearer(r)
+				if bearer == "" {
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
 
-				return
+					return
+				}
+				ok, apiToken := j.config.Store.AuthBearer(bearer, pathInfo.NodeID, pathInfo.Port)
+				if !ok {
+					http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
+					return
+				}
+
+				// replace Bearer with apiToken
+				r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 			}
-			ok, apiToken := j.config.Store.AuthBearer(bearer, pathInfo.NodeID, pathInfo.Port)
-			if !ok {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-
-				return
-			}
-
-			// replace Bearer with apiToken
-			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiToken))
 
 			// add Header: X-Forwarded-*
 			r.Header.Add("X-Forwarded-Host", j.config.Store.GetRelayHost().ID().String())
